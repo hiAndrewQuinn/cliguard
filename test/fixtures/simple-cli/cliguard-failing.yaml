@@ -1,0 +1,28 @@
+use: simple-cli
+short: A different description  # This will fail
+long: This is a simple CLI for testing cliguard
+
+flags:
+  - name: config
+    shorthand: c
+    usage: config file path
+    type: string
+    persistent: true
+  - name: verbose  # This flag doesn't exist
+    shorthand: v
+    usage: verbose output
+    type: bool
+
+commands:
+  - use: server
+    short: Server management commands
+    flags:
+      - name: port
+        shorthand: p
+        usage: server port
+        type: string  # Wrong type, should be int
+    commands:
+      - use: start
+        short: Start the server
+      - use: stop  # This command doesn't exist
+        short: Stop the server
