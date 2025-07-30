@@ -1,0 +1,60 @@
+# Cliguard contract file
+# To use this contract, pipe this output to a file:
+#   cliguard generate --project-path . > cliguard.yaml
+#
+use: breaking-test
+short: Test CLI for breaking changes v1
+long: Version 1 of the CLI to test breaking change detection.
+flags:
+    - name: config
+      shorthand: c
+      usage: Config file path
+      type: string
+      persistent: true
+    - name: verbose
+      shorthand: v
+      usage: Enable verbose output
+      type: bool
+      persistent: true
+commands:
+    - use: build
+      short: Build the application
+      flags:
+        - name: optimize
+          usage: Enable optimizations
+          type: bool
+        - name: target
+          shorthand: t
+          usage: Build target
+          type: string
+      commands:
+        - use: cache
+          short: Manage build cache
+    - use: deploy [target]
+      short: Deploy the application
+      flags:
+        - name: dry-run
+          usage: Perform a dry run
+          type: bool
+        - name: environment
+          shorthand: e
+          usage: Target environment
+          type: string
+        - name: force
+          shorthand: f
+          usage: Force deployment
+          type: bool
+        - name: output
+          shorthand: o
+          usage: Output format
+          type: string
+    - use: test [packages...]
+      short: Run tests
+      flags:
+        - name: coverage
+          usage: Generate coverage report
+          type: bool
+        - name: parallel
+          shorthand: p
+          usage: Number of parallel tests
+          type: int

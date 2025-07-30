@@ -1,0 +1,86 @@
+# Cliguard contract file
+# To use this contract, pipe this output to a file:
+#   cliguard generate --project-path . > cliguard.yaml
+#
+use: subcmd-test
+short: A CLI with subcommands for testing
+long: This CLI demonstrates various subcommand patterns for testing cliguard.
+flags:
+    - name: config
+      usage: Config file path
+      type: string
+      persistent: true
+    - name: verbose
+      shorthand: v
+      usage: Enable verbose output
+      type: bool
+      persistent: true
+commands:
+    - use: config
+      short: Manage configuration
+      long: View and modify configuration settings.
+      commands:
+        - use: get [key]
+          short: Get configuration value
+        - use: set [key] [value]
+          short: Set configuration value
+    - use: create [resource]
+      short: Create a new resource
+      long: Create various types of resources in the system.
+      flags:
+        - name: force
+          shorthand: f
+          usage: Force creation even if exists
+          type: bool
+        - name: name
+          usage: Name for the resource
+          type: string
+        - name: type
+          shorthand: t
+          usage: Resource type to create
+          type: string
+      commands:
+        - use: project [name]
+          short: Create a new project
+          flags:
+            - name: private
+              usage: Make project private
+              type: bool
+            - name: template
+              shorthand: t
+              usage: Project template to use
+              type: string
+        - use: user [username]
+          short: Create a new user
+          flags:
+            - name: admin
+              usage: Grant admin privileges
+              type: bool
+            - name: email
+              usage: User email address
+              type: string
+    - use: delete [resource]
+      short: Delete resources
+      flags:
+        - name: cascade
+          usage: Delete dependent resources
+          type: bool
+        - name: force
+          shorthand: f
+          usage: Force deletion without confirmation
+          type: bool
+    - use: list [resource]
+      short: List resources
+      flags:
+        - name: all
+          shorthand: a
+          usage: List all items including archived
+          type: bool
+        - name: format
+          shorthand: f
+          usage: Output format (table, json, yaml)
+          type: string
+        - name: limit
+          shorthand: l
+          usage: Maximum number of items to list
+          type: int

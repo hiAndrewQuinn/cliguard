@@ -1,0 +1,138 @@
+# Cliguard contract file
+# To use this contract, pipe this output to a file:
+#   cliguard generate --project-path . > cliguard.yaml
+#
+use: flagtypes
+short: Test CLI for all flag types
+long: This CLI demonstrates all possible Cobra flag types for comprehensive testing.
+flags:
+    - name: string-to-int64
+      usage: String to int64 map flag
+      type: '*pflag.stringToInt64Value'
+    - name: count
+      shorthand: c
+      usage: Count flag (can be repeated)
+      type: '*pflag.countValue'
+    - name: int32-slice
+      usage: Int32 slice flag
+      type: '*pflag.int32SliceValue'
+    - name: int64-slice
+      usage: Int64 slice flag
+      type: '*pflag.int64SliceValue'
+    - name: int8
+      usage: Int8 flag
+      type: '*pflag.int8Value'
+    - name: uint-slice
+      usage: Uint slice flag
+      type: '*pflag.uintSliceValue'
+    - name: float32
+      usage: Float32 flag
+      type: '*pflag.float32Value'
+    - name: int-slice
+      usage: Int slice flag
+      type: '*pflag.intSliceValue'
+    - name: ip-slice
+      usage: IP slice flag
+      type: '*pflag.ipSliceValue'
+    - name: ipmask
+      usage: IP mask flag
+      type: '*pflag.ipMaskValue'
+    - name: bool
+      shorthand: b
+      usage: Bool flag
+      type: bool
+    - name: string-to-string
+      usage: String to string map flag
+      type: '*pflag.stringToStringValue'
+    - name: uint16
+      usage: Uint16 flag
+      type: '*pflag.uint16Value'
+    - name: bool-slice
+      usage: Bool slice flag
+      type: '*pflag.boolSliceValue'
+    - name: bytes-base64
+      usage: Bytes base64 flag
+      type: '*pflag.bytesBase64Value'
+    - name: int64
+      usage: Int64 flag
+      type: int64
+    - name: uint
+      shorthand: u
+      usage: Uint flag
+      type: '*pflag.uintValue'
+    - name: persistent-int
+      usage: Persistent int flag
+      type: int
+      persistent: true
+    - name: string-slice
+      usage: String slice flag
+      type: stringSlice
+    - name: float32-slice
+      usage: Float32 slice flag
+      type: '*pflag.float32SliceValue'
+    - name: int
+      shorthand: i
+      usage: Int flag
+      type: int
+    - name: ip
+      usage: IP address flag
+      type: '*pflag.ipValue'
+    - name: required-flag
+      usage: This flag is required
+      type: string
+    - name: uint8
+      usage: Uint8 flag
+      type: '*pflag.uint8Value'
+    - name: persistent-string
+      usage: Persistent string flag
+      type: string
+      persistent: true
+    - name: duration-slice
+      usage: Duration slice flag
+      type: '*pflag.durationSliceValue'
+    - name: float64
+      usage: Float64 flag
+      type: float64
+    - name: int16
+      usage: Int16 flag
+      type: '*pflag.int16Value'
+    - name: string
+      shorthand: s
+      usage: String flag
+      type: string
+    - name: uint32
+      usage: Uint32 flag
+      type: '*pflag.uint32Value'
+    - name: bytes-hex
+      usage: Bytes hex flag
+      type: '*pflag.bytesHexValue'
+    - name: float64-slice
+      usage: Float64 slice flag
+      type: '*pflag.float64SliceValue'
+    - name: int32
+      usage: Int32 flag
+      type: '*pflag.int32Value'
+    - name: ipnet
+      usage: IP network flag
+      type: '*pflag.ipNetValue'
+    - name: uint64
+      usage: Uint64 flag
+      type: '*pflag.uint64Value'
+    - name: persistent-bool
+      usage: Persistent bool flag
+      type: bool
+      persistent: true
+    - name: duration
+      shorthand: d
+      usage: Duration flag
+      type: duration
+commands:
+    - use: test
+      short: Test subcommand
+      flags:
+        - name: local-int
+          usage: Local int flag
+          type: int
+        - name: local-string
+          usage: Local string flag
+          type: string

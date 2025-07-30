@@ -1,0 +1,7 @@
+# Cliguard contract file
+# To use this contract, pipe this output to a file:
+#   cliguard generate --project-path . > cliguard.yaml
+#
+use: simple
+short: A simple CLI for testing
+long: This is the simplest possible Cobra CLI with just a root command.
