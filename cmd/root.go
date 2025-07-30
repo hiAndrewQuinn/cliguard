@@ -2,19 +2,22 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
-	"path/filepath"
 
-	"github.com/hiAndrewQuinn/cliguard/internal/contract"
-	"github.com/hiAndrewQuinn/cliguard/internal/inspector"
-	"github.com/hiAndrewQuinn/cliguard/internal/validator"
+	"github.com/hiAndrewQuinn/cliguard/internal/service"
 	"github.com/spf13/cobra"
 )
 
 // Execute runs the root command
 func Execute() {
+	ExecuteWithWriter(os.Stderr)
+}
+
+// ExecuteWithWriter runs the root command with a custom writer for testing
+func ExecuteWithWriter(errWriter io.Writer) {
 	if err := NewRootCmd().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(errWriter, err)
 		os.Exit(1)
 	}
 }
@@ -53,57 +56,63 @@ and flags match the expected specification.`,
 	return rootCmd
 }
 
-func runValidate(cmd *cobra.Command, args []string) error {
-	// Resolve project path
-	absProjectPath, err := filepath.Abs(projectPath)
-	if err != nil {
-		return fmt.Errorf("failed to resolve project path: %w", err)
+// ValidateRunner interface for dependency injection
+type ValidateRunner interface {
+	Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error
+}
+
+// DefaultValidateRunner is the default implementation
+type DefaultValidateRunner struct {
+	service *service.ValidateService
+}
+
+// NewDefaultValidateRunner creates a new default runner
+func NewDefaultValidateRunner() *DefaultValidateRunner {
+	return &DefaultValidateRunner{
+		service: service.NewValidateService(),
+	}
+}
+
+// Run executes the validation
+func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+	opts := service.ValidateOptions{
+		ProjectPath:  projectPath,
+		ContractPath: contractPath,
+		Entrypoint:   entrypoint,
 	}
 
-	// Check if project path exists
-	if _, err := os.Stat(absProjectPath); os.IsNotExist(err) {
-		return fmt.Errorf("project path does not exist: %s", absProjectPath)
-	}
-
-	// Determine contract path
+	// Print progress messages
 	if contractPath == "" {
-		contractPath = filepath.Join(absProjectPath, "cliguard.yaml")
-	} else {
-		contractPath, err = filepath.Abs(contractPath)
-		if err != nil {
-			return fmt.Errorf("failed to resolve contract path: %w", err)
-		}
+		contractPath = "cliguard.yaml in project path"
 	}
+	cmd.Printf("Loading contract from: %s\n", contractPath)
+	cmd.Printf("Inspecting CLI structure in: %s\n", projectPath)
+	cmd.Println("Validating CLI structure against contract...")
 
-	// Load the contract
-	fmt.Printf("Loading contract from: %s\n", contractPath)
-	contractSpec, err := contract.Load(contractPath)
+	// Run validation
+	result, err := r.service.Validate(opts)
 	if err != nil {
-		return fmt.Errorf("failed to load contract: %w", err)
+		return err
 	}
-
-	// Generate and run the inspector
-	fmt.Printf("Inspecting CLI structure in: %s\n", absProjectPath)
-	actualStructure, err := inspector.InspectProject(absProjectPath, entrypoint)
-	if err != nil {
-		return fmt.Errorf("failed to inspect project: %w", err)
-	}
-
-	// Validate the actual structure against the contract
-	fmt.Println("Validating CLI structure against contract...")
-	result := validator.Validate(contractSpec, actualStructure)
 
 	// Report results
-	if result.IsValid() {
-		fmt.Println("✅ Validation passed! CLI structure matches the contract.")
+	if result.Success {
+		cmd.Println("✅ Validation passed! CLI structure matches the contract.")
 		return nil
 	}
 
 	// Print validation errors
-	fmt.Println("❌ Validation failed!")
-	fmt.Println()
-	result.PrintReport()
+	cmd.Println("❌ Validation failed!")
+	cmd.Println()
+	result.Result.PrintReport()
 
 	os.Exit(1)
 	return nil
+}
+
+// Global runner for testing
+var validateRunner ValidateRunner = NewDefaultValidateRunner()
+
+func runValidate(cmd *cobra.Command, args []string) error {
+	return validateRunner.Run(cmd, projectPath, contractPath, entrypoint)
 }

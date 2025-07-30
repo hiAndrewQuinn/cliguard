@@ -1,0 +1,954 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cmd: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/hiAndrewQuinn/cliguard/cmd/root.go (61.5%)</option>
+				
+				<option value="file1">github.com/hiAndrewQuinn/cliguard/internal/contract/parser.go (90.2%)</option>
+				
+				<option value="file2">github.com/hiAndrewQuinn/cliguard/internal/inspector/inspector.go (9.2%)</option>
+				
+				<option value="file3">github.com/hiAndrewQuinn/cliguard/internal/validator/types.go (100.0%)</option>
+				
+				<option value="file4">github.com/hiAndrewQuinn/cliguard/internal/validator/validator.go (91.7%)</option>
+				
+				<option value="file5">github.com/hiAndrewQuinn/cliguard/main.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package cmd
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "github.com/hiAndrewQuinn/cliguard/internal/contract"
+        "github.com/hiAndrewQuinn/cliguard/internal/inspector"
+        "github.com/hiAndrewQuinn/cliguard/internal/validator"
+        "github.com/spf13/cobra"
+)
+
+// Execute runs the root command
+func Execute() <span class="cov0" title="0">{
+        if err := NewRootCmd().Execute(); err != nil </span><span class="cov0" title="0">{
+                fmt.Fprintln(os.Stderr, err)
+                os.Exit(1)
+        }</span>
+}
+
+var (
+        projectPath  string
+        contractPath string
+        entrypoint   string
+)
+
+func NewRootCmd() *cobra.Command <span class="cov8" title="1">{
+        rootCmd := &amp;cobra.Command{
+                Use:   "cliguard",
+                Short: "A contract-based validation tool for Cobra CLIs",
+                Long: `Cliguard validates Cobra command structures against a YAML contract file.
+It ensures your CLI commands, flags, and structure remain consistent over time.`,
+        }
+
+        validateCmd := &amp;cobra.Command{
+                Use:   "validate",
+                Short: "Validate a Cobra CLI against a contract file",
+                Long: `Validate inspects a Go project's Cobra command structure and validates
+it against a YAML contract file. This ensures the CLI's structure, commands,
+and flags match the expected specification.`,
+                RunE: runValidate,
+        }
+
+        validateCmd.Flags().StringVar(&amp;projectPath, "project-path", "", "Path to the root of the target Go project (required)")
+        validateCmd.Flags().StringVar(&amp;contractPath, "contract", "", "Path to the contract file (defaults to cliguard.yaml in project path)")
+        validateCmd.Flags().StringVar(&amp;entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
+
+        validateCmd.MarkFlagRequired("project-path")
+
+        rootCmd.AddCommand(validateCmd)
+
+        return rootCmd
+}</span>
+
+func runValidate(cmd *cobra.Command, args []string) error <span class="cov8" title="1">{
+        // Resolve project path
+        absProjectPath, err := filepath.Abs(projectPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to resolve project path: %w", err)
+        }</span>
+
+        // Check if project path exists
+        <span class="cov8" title="1">if _, err := os.Stat(absProjectPath); os.IsNotExist(err) </span><span class="cov8" title="1">{
+                return fmt.Errorf("project path does not exist: %s", absProjectPath)
+        }</span>
+
+        // Determine contract path
+        <span class="cov8" title="1">if contractPath == "" </span><span class="cov8" title="1">{
+                contractPath = filepath.Join(absProjectPath, "cliguard.yaml")
+        }</span> else<span class="cov8" title="1"> {
+                contractPath, err = filepath.Abs(contractPath)
+                if err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to resolve contract path: %w", err)
+                }</span>
+        }
+
+        // Load the contract
+        <span class="cov8" title="1">cmd.Printf("Loading contract from: %s\n", contractPath)
+        contractSpec, err := contract.Load(contractPath)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to load contract: %w", err)
+        }</span>
+
+        // Generate and run the inspector
+        <span class="cov8" title="1">cmd.Printf("Inspecting CLI structure in: %s\n", absProjectPath)
+        actualStructure, err := inspector.InspectProject(absProjectPath, entrypoint)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to inspect project: %w", err)
+        }</span>
+
+        // Validate the actual structure against the contract
+        <span class="cov0" title="0">cmd.Println("Validating CLI structure against contract...")
+        result := validator.Validate(contractSpec, actualStructure)
+
+        // Report results
+        if result.IsValid() </span><span class="cov0" title="0">{
+                cmd.Println("✅ Validation passed! CLI structure matches the contract.")
+                return nil
+        }</span>
+
+        // Print validation errors
+        <span class="cov0" title="0">cmd.Println("❌ Validation failed!")
+        cmd.Println()
+        result.PrintReport()
+
+        os.Exit(1)
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package contract
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "gopkg.in/yaml.v3"
+)
+
+// Load reads and parses a contract file
+func Load(contractPath string) (*Contract, error) <span class="cov8" title="1">{
+        if contractPath == "" </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("contract path cannot be empty")
+        }</span>
+
+        <span class="cov8" title="1">absPath, err := filepath.Abs(contractPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to resolve contract path: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">data, err := os.ReadFile(absPath)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to read contract file: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">var contract Contract
+        if err := yaml.Unmarshal(data, &amp;contract); err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to parse contract YAML: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := validate(&amp;contract); err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("contract validation failed: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return &amp;contract, nil</span>
+}
+
+// validate performs basic validation on the contract
+func validate(contract *Contract) error <span class="cov8" title="1">{
+        if contract.Use == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("root command 'use' field cannot be empty")
+        }</span>
+
+        // Validate all flags
+        <span class="cov8" title="1">if err := validateFlags(contract.Flags); err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("root command flags: %w", err)
+        }</span>
+
+        // Validate all subcommands recursively
+        <span class="cov8" title="1">for _, cmd := range contract.Commands </span><span class="cov8" title="1">{
+                if err := validateCommand(&amp;cmd, contract.Use); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func validateCommand(cmd *Command, parentPath string) error <span class="cov8" title="1">{
+        if cmd.Use == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("command under '%s': 'use' field cannot be empty", parentPath)
+        }</span>
+
+        <span class="cov8" title="1">currentPath := parentPath + " " + cmd.Use
+
+        if err := validateFlags(cmd.Flags); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("command '%s' flags: %w", currentPath, err)
+        }</span>
+
+        <span class="cov8" title="1">for _, subcmd := range cmd.Commands </span><span class="cov8" title="1">{
+                if err := validateCommand(&amp;subcmd, currentPath); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func validateFlags(flags []Flag) error <span class="cov8" title="1">{
+        seenNames := make(map[string]bool)
+        seenShorthands := make(map[string]bool)
+
+        for _, flag := range flags </span><span class="cov8" title="1">{
+                if flag.Name == "" </span><span class="cov8" title="1">{
+                        return fmt.Errorf("flag name cannot be empty")
+                }</span>
+
+                <span class="cov8" title="1">if seenNames[flag.Name] </span><span class="cov8" title="1">{
+                        return fmt.Errorf("duplicate flag name: %s", flag.Name)
+                }</span>
+                <span class="cov8" title="1">seenNames[flag.Name] = true
+
+                if flag.Shorthand != "" </span><span class="cov8" title="1">{
+                        if len(flag.Shorthand) != 1 </span><span class="cov8" title="1">{
+                                return fmt.Errorf("flag shorthand must be a single character: %s", flag.Shorthand)
+                        }</span>
+                        <span class="cov8" title="1">if seenShorthands[flag.Shorthand] </span><span class="cov8" title="1">{
+                                return fmt.Errorf("duplicate flag shorthand: %s", flag.Shorthand)
+                        }</span>
+                        <span class="cov8" title="1">seenShorthands[flag.Shorthand] = true</span>
+                }
+
+                <span class="cov8" title="1">if flag.Type == "" </span><span class="cov8" title="1">{
+                        return fmt.Errorf("flag '%s': type cannot be empty", flag.Name)
+                }</span>
+
+                // Validate flag type
+                <span class="cov8" title="1">validTypes := map[string]bool{
+                        "string": true, "bool": true, "int": true, "int64": true,
+                        "float64": true, "duration": true, "stringSlice": true,
+                }
+                if !validTypes[flag.Type] </span><span class="cov8" title="1">{
+                        return fmt.Errorf("flag '%s': invalid type '%s'", flag.Name, flag.Type)
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package inspector
+
+import (
+        "bytes"
+        "encoding/json"
+        "fmt"
+        "os"
+        "os/exec"
+        "path/filepath"
+        "strings"
+        "text/template"
+)
+
+const inspectorTemplate = `package main
+
+import (
+        "encoding/json"
+        "fmt"
+        "os"
+        "reflect"
+        
+        "github.com/spf13/cobra"
+        "github.com/spf13/pflag"
+        {{- if .ImportPath }}
+        {{- if .ImportAlias }}
+        {{ .ImportAlias }} "{{ .ImportPath }}"
+        {{- else }}
+        "{{ .ImportPath }}"
+        {{- end }}
+        {{- end }}
+)
+
+type InspectedCLI struct {
+        Use      string              ` + "`json:\"use\"`" + `
+        Short    string              ` + "`json:\"short\"`" + `
+        Long     string              ` + "`json:\"long,omitempty\"`" + `
+        Flags    []InspectedFlag     ` + "`json:\"flags,omitempty\"`" + `
+        Commands []InspectedCommand  ` + "`json:\"commands,omitempty\"`" + `
+}
+
+type InspectedCommand struct {
+        Use      string              ` + "`json:\"use\"`" + `
+        Short    string              ` + "`json:\"short\"`" + `
+        Long     string              ` + "`json:\"long,omitempty\"`" + `
+        Flags    []InspectedFlag     ` + "`json:\"flags,omitempty\"`" + `
+        Commands []InspectedCommand  ` + "`json:\"commands,omitempty\"`" + `
+}
+
+type InspectedFlag struct {
+        Name       string ` + "`json:\"name\"`" + `
+        Shorthand  string ` + "`json:\"shorthand,omitempty\"`" + `
+        Usage      string ` + "`json:\"usage\"`" + `
+        Type       string ` + "`json:\"type\"`" + `
+        Persistent bool   ` + "`json:\"persistent\"`" + `
+}
+
+func main() {
+        var rootCmd *cobra.Command
+        
+        {{ if .EntrypointFunc }}
+        // Call the user's entrypoint function
+        {{- if .ImportAlias }}
+        rootCmd = {{ .ImportAlias }}.{{ .EntrypointFunc }}()
+        {{- else }}
+        rootCmd = {{ .EntrypointFunc }}()
+        {{- end }}
+        {{ else }}
+        // Try to find the root command in common locations
+        if cmd := findRootCommand(); cmd != nil {
+                rootCmd = cmd
+        } else {
+                fmt.Fprintf(os.Stderr, "Could not find root command\n")
+                os.Exit(1)
+        }
+        {{ end }}
+
+        // Inspect the command tree
+        cli := inspectCommand(rootCmd)
+        
+        // Output as JSON
+        encoder := json.NewEncoder(os.Stdout)
+        encoder.SetIndent("", "  ")
+        if err := encoder.Encode(cli); err != nil {
+                fmt.Fprintf(os.Stderr, "Failed to encode JSON: %v\n", err)
+                os.Exit(1)
+        }
+}
+
+func findRootCommand() *cobra.Command {
+        // This is a placeholder - in real implementation, we'd use reflection
+        // or require the user to specify the entrypoint
+        return nil
+}
+
+func inspectCommand(cmd *cobra.Command) InspectedCLI {
+        cli := InspectedCLI{
+                Use:   cmd.Use,
+                Short: cmd.Short,
+                Long:  cmd.Long,
+        }
+        
+        // Inspect local flags
+        localFlags := inspectFlagSet(cmd.Flags(), false)
+        
+        // Inspect persistent flags
+        persistentFlags := inspectFlagSet(cmd.PersistentFlags(), true)
+        
+        // Combine flags, avoiding duplicates
+        flagMap := make(map[string]InspectedFlag)
+        for _, f := range localFlags {
+                flagMap[f.Name] = f
+        }
+        for _, f := range persistentFlags {
+                if _, exists := flagMap[f.Name]; !exists {
+                        flagMap[f.Name] = f
+                }
+        }
+        
+        cli.Flags = make([]InspectedFlag, 0, len(flagMap))
+        for _, f := range flagMap {
+                cli.Flags = append(cli.Flags, f)
+        }
+        
+        // Inspect subcommands
+        for _, subcmd := range cmd.Commands() {
+                if subcmd.Hidden {
+                        continue
+                }
+                cli.Commands = append(cli.Commands, inspectSubcommand(subcmd))
+        }
+        
+        return cli
+}
+
+func inspectSubcommand(cmd *cobra.Command) InspectedCommand {
+        command := InspectedCommand{
+                Use:   cmd.Use,
+                Short: cmd.Short,
+                Long:  cmd.Long,
+        }
+        
+        // Inspect local flags only (persistent flags are inherited)
+        command.Flags = inspectFlagSet(cmd.Flags(), false)
+        
+        // Inspect subcommands
+        for _, subcmd := range cmd.Commands() {
+                if subcmd.Hidden {
+                        continue
+                }
+                command.Commands = append(command.Commands, inspectSubcommand(subcmd))
+        }
+        
+        return command
+}
+
+func inspectFlagSet(flags *pflag.FlagSet, persistent bool) []InspectedFlag {
+        var inspectedFlags []InspectedFlag
+        
+        flags.VisitAll(func(flag *pflag.Flag) {
+                if flag.Hidden {
+                        return
+                }
+                
+                inspectedFlag := InspectedFlag{
+                        Name:       flag.Name,
+                        Shorthand:  flag.Shorthand,
+                        Usage:      flag.Usage,
+                        Type:       getFlagType(flag),
+                        Persistent: persistent,
+                }
+                
+                inspectedFlags = append(inspectedFlags, inspectedFlag)
+        })
+        
+        return inspectedFlags
+}
+
+func getFlagType(flag *pflag.Flag) string {
+        // Get the type from the flag's value
+        flagType := reflect.TypeOf(flag.Value).String()
+        
+        // Map common pflag types to simpler names
+        typeMap := map[string]string{
+                "*pflag.stringValue":     "string",
+                "*pflag.boolValue":       "bool",
+                "*pflag.intValue":        "int",
+                "*pflag.int64Value":      "int64",
+                "*pflag.float64Value":    "float64",
+                "*pflag.durationValue":   "duration",
+                "*pflag.stringSliceValue": "stringSlice",
+        }
+        
+        if simpleType, ok := typeMap[flagType]; ok {
+                return simpleType
+        }
+        
+        return flagType
+}
+`
+
+// InspectProject generates an inspector program and runs it to get the CLI structure
+func InspectProject(projectPath, entrypoint string) (*InspectedCLI, error) <span class="cov0" title="0">{
+        // Create a temporary directory for the inspector
+        tempDir, err := os.MkdirTemp("", "cliguard-inspector-*")
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to create temp directory: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer os.RemoveAll(tempDir)
+
+        // Parse the entrypoint to extract import path and function
+        var importPath, entrypointFunc, importAlias string
+        isMainPackage := false
+
+        if entrypoint != "" </span><span class="cov0" title="0">{
+                parts := strings.Split(entrypoint, ".")
+                if len(parts) &lt; 2 </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("invalid entrypoint format, expected: package.Function")
+                }</span>
+
+                // Check if it's just package.Function (e.g., main.NewRootCmd)
+                <span class="cov0" title="0">if len(parts) == 2 &amp;&amp; parts[0] == "main" </span><span class="cov0" title="0">{
+                        // For main package, we'll handle this later
+                        isMainPackage = true
+                        entrypointFunc = parts[1]
+                }</span> else<span class="cov0" title="0"> {
+                        importPath = strings.Join(parts[:len(parts)-1], ".")
+                        entrypointFunc = parts[len(parts)-1]
+                        // Use an alias to avoid naming conflicts
+                        importAlias = "userCmd"
+                }</span>
+        }
+
+        // Initialize go module in temp directory first
+        <span class="cov0" title="0">initCmd := exec.Command("go", "mod", "init", "cliguard-inspector")
+        initCmd.Dir = tempDir
+        if output, err := initCmd.CombinedOutput(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to init module: %w\nOutput: %s", err, output)
+        }</span>
+
+        // Handle imports and code copying based on the entrypoint
+        <span class="cov0" title="0">if isMainPackage </span><span class="cov0" title="0">{
+                // For main package, we need to copy the project as a module
+                // First copy go.mod if it exists
+                srcGoMod := filepath.Join(projectPath, "go.mod")
+                if _, err := os.Stat(srcGoMod); err == nil </span><span class="cov0" title="0">{
+                        modContent, err := os.ReadFile(srcGoMod)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("failed to read target go.mod: %w", err)
+                        }</span>
+
+                        <span class="cov0" title="0">moduleName := getModuleName(modContent)
+                        if moduleName != "" </span><span class="cov0" title="0">{
+                                // Update our inspector to import the module and create an alias
+                                importPath = moduleName
+                                importAlias = "userPkg"
+
+                                // Add replace directive
+                                replaceCmd := exec.Command("go", "mod", "edit", "-replace", fmt.Sprintf("%s=%s", moduleName, projectPath))
+                                replaceCmd.Dir = tempDir
+                                if output, err := replaceCmd.CombinedOutput(); err != nil </span><span class="cov0" title="0">{
+                                        return nil, fmt.Errorf("failed to add replace directive: %w\nOutput: %s", err, output)
+                                }</span>
+                        }
+                }
+        } else<span class="cov0" title="0"> if importPath != "" </span><span class="cov0" title="0">{
+                // For non-main packages, add replace directive
+                srcGoMod := filepath.Join(projectPath, "go.mod")
+                if _, err := os.Stat(srcGoMod); err == nil </span><span class="cov0" title="0">{
+                        modContent, err := os.ReadFile(srcGoMod)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("failed to read target go.mod: %w", err)
+                        }</span>
+
+                        <span class="cov0" title="0">replaceCmd := exec.Command("go", "mod", "edit", "-replace", fmt.Sprintf("%s=%s", getModuleName(modContent), projectPath))
+                        replaceCmd.Dir = tempDir
+                        if output, err := replaceCmd.CombinedOutput(); err != nil </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("failed to add replace directive: %w\nOutput: %s", err, output)
+                        }</span>
+                }
+        }
+
+        // Now generate the inspector program with the correct import details
+        <span class="cov0" title="0">tmpl, err := template.New("inspector").Parse(inspectorTemplate)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to parse template: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">var buf bytes.Buffer
+        err = tmpl.Execute(&amp;buf, struct {
+                ImportPath     string
+                ImportAlias    string
+                EntrypointFunc string
+        }{
+                ImportPath:     importPath,
+                ImportAlias:    importAlias,
+                EntrypointFunc: entrypointFunc,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to execute template: %w", err)
+        }</span>
+
+        // Write the inspector program
+        <span class="cov0" title="0">inspectorPath := filepath.Join(tempDir, "inspector.go")
+        if err := os.WriteFile(inspectorPath, buf.Bytes(), 0644); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to write inspector program: %w", err)
+        }</span>
+
+        // Get dependencies
+        <span class="cov0" title="0">getCmd := exec.Command("go", "get", "./...")
+        getCmd.Dir = tempDir
+        if output, err := getCmd.CombinedOutput(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to get dependencies: %w\nOutput: %s", err, output)
+        }</span>
+
+        // Run the inspector
+        <span class="cov0" title="0">runCmd := exec.Command("go", "run", "inspector.go")
+        runCmd.Dir = tempDir
+        output, err := runCmd.Output()
+        if err != nil </span><span class="cov0" title="0">{
+                if exitErr, ok := err.(*exec.ExitError); ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("inspector failed: %w\nStderr: %s", err, exitErr.Stderr)
+                }</span>
+                <span class="cov0" title="0">return nil, fmt.Errorf("failed to run inspector: %w", err)</span>
+        }
+
+        // Parse the JSON output
+        <span class="cov0" title="0">var cli InspectedCLI
+        if err := json.Unmarshal(output, &amp;cli); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to parse inspector output: %w\nOutput: %s", err, output)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;cli, nil</span>
+}
+
+// getModuleName extracts the module name from go.mod content
+func getModuleName(goModContent []byte) string <span class="cov8" title="1">{
+        lines := strings.Split(string(goModContent), "\n")
+        for _, line := range lines </span><span class="cov8" title="1">{
+                if strings.HasPrefix(strings.TrimSpace(line), "module ") </span><span class="cov8" title="1">{
+                        parts := strings.Fields(line)
+                        if len(parts) &gt;= 2 </span><span class="cov8" title="1">{
+                                return parts[1]
+                        }</span>
+                }
+        }
+        <span class="cov8" title="1">return ""</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package validator
+
+import "fmt"
+
+// ValidationResult holds the results of validating a CLI against a contract
+type ValidationResult struct {
+        Valid  bool
+        Errors []ValidationError
+}
+
+// ValidationError represents a single validation failure
+type ValidationError struct {
+        Type     ErrorType
+        Path     string
+        Expected string
+        Actual   string
+        Message  string
+}
+
+// ErrorType defines the type of validation error
+type ErrorType string
+
+const (
+        ErrorTypeMissing     ErrorType = "missing"
+        ErrorTypeUnexpected  ErrorType = "unexpected"
+        ErrorTypeMismatch    ErrorType = "mismatch"
+        ErrorTypeInvalidType ErrorType = "invalid_type"
+)
+
+// IsValid returns true if there are no validation errors
+func (vr *ValidationResult) IsValid() bool <span class="cov8" title="1">{
+        return len(vr.Errors) == 0
+}</span>
+
+// AddError adds a new validation error to the result
+func (vr *ValidationResult) AddError(errorType ErrorType, path, expected, actual, message string) <span class="cov8" title="1">{
+        vr.Errors = append(vr.Errors, ValidationError{
+                Type:     errorType,
+                Path:     path,
+                Expected: expected,
+                Actual:   actual,
+                Message:  message,
+        })
+        vr.Valid = false
+}</span>
+
+// PrintReport prints a human-readable validation report
+func (vr *ValidationResult) PrintReport() <span class="cov8" title="1">{
+        for _, err := range vr.Errors </span><span class="cov8" title="1">{
+                switch err.Type </span>{
+                case ErrorTypeMissing:<span class="cov8" title="1">
+                        fmt.Printf("- %s: Missing %s\n", err.Path, err.Message)
+                        if err.Expected != "" </span><span class="cov8" title="1">{
+                                fmt.Printf("    Expected: %s\n", err.Expected)
+                        }</span>
+                case ErrorTypeUnexpected:<span class="cov8" title="1">
+                        fmt.Printf("- %s: Unexpected %s\n", err.Path, err.Message)
+                        if err.Actual != "" </span><span class="cov8" title="1">{
+                                fmt.Printf("    Found: %s\n", err.Actual)
+                        }</span>
+                case ErrorTypeMismatch:<span class="cov8" title="1">
+                        fmt.Printf("- %s: %s\n", err.Path, err.Message)
+                        fmt.Printf("    Expected: %s\n", err.Expected)
+                        fmt.Printf("    Actual:   %s\n", err.Actual)</span>
+                case ErrorTypeInvalidType:<span class="cov8" title="1">
+                        fmt.Printf("- %s: %s\n", err.Path, err.Message)
+                        fmt.Printf("    Expected type: %s\n", err.Expected)
+                        fmt.Printf("    Actual type:   %s\n", err.Actual)</span>
+                }
+        }
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package validator
+
+import (
+        "fmt"
+        "strings"
+
+        "github.com/hiAndrewQuinn/cliguard/internal/contract"
+        "github.com/hiAndrewQuinn/cliguard/internal/inspector"
+)
+
+// Validate compares the actual CLI structure against the contract
+func Validate(expected *contract.Contract, actual *inspector.InspectedCLI) *ValidationResult <span class="cov8" title="1">{
+        result := &amp;ValidationResult{Valid: true}
+
+        // Validate root command
+        validateRootCommand(expected, actual, result)
+
+        // Validate flags
+        validateFlags("", expected.Flags, actual.Flags, result)
+
+        // Validate subcommands
+        validateCommands("", expected.Commands, actual.Commands, result)
+
+        return result
+}</span>
+
+func validateRootCommand(expected *contract.Contract, actual *inspector.InspectedCLI, result *ValidationResult) <span class="cov8" title="1">{
+        // Validate Use field
+        if expected.Use != actual.Use </span><span class="cov8" title="1">{
+                result.AddError(ErrorTypeMismatch, "root", expected.Use, actual.Use, "Mismatch in 'use' field")
+        }</span>
+
+        // Validate Short description
+        <span class="cov8" title="1">if expected.Short != "" &amp;&amp; expected.Short != actual.Short </span><span class="cov8" title="1">{
+                result.AddError(ErrorTypeMismatch, "root", expected.Short, actual.Short, "Mismatch in short description")
+        }</span>
+
+        // Validate Long description if specified
+        <span class="cov8" title="1">if expected.Long != "" &amp;&amp; expected.Long != actual.Long </span><span class="cov0" title="0">{
+                result.AddError(ErrorTypeMismatch, "root", expected.Long, actual.Long, "Mismatch in long description")
+        }</span>
+}
+
+func validateCommands(parentPath string, expected []contract.Command, actual []inspector.InspectedCommand, result *ValidationResult) <span class="cov8" title="1">{
+        // Create maps for easier lookup
+        expectedMap := make(map[string]*contract.Command)
+        for i := range expected </span><span class="cov8" title="1">{
+                expectedMap[expected[i].Use] = &amp;expected[i]
+        }</span>
+
+        <span class="cov8" title="1">actualMap := make(map[string]*inspector.InspectedCommand)
+        for i := range actual </span><span class="cov8" title="1">{
+                actualMap[actual[i].Use] = &amp;actual[i]
+        }</span>
+
+        // Check for missing commands
+        <span class="cov8" title="1">for _, exp := range expected </span><span class="cov8" title="1">{
+                cmdPath := joinPath(parentPath, exp.Use)
+                if _, found := actualMap[exp.Use]; !found </span><span class="cov8" title="1">{
+                        result.AddError(ErrorTypeMissing, cmdPath, exp.Use, "", "command")
+                }</span>
+        }
+
+        // Check for unexpected commands
+        <span class="cov8" title="1">for _, act := range actual </span><span class="cov8" title="1">{
+                cmdPath := joinPath(parentPath, act.Use)
+                if _, found := expectedMap[act.Use]; !found </span><span class="cov8" title="1">{
+                        result.AddError(ErrorTypeUnexpected, cmdPath, "", act.Use, "command")
+                }</span>
+        }
+
+        // Validate matching commands
+        <span class="cov8" title="1">for use, exp := range expectedMap </span><span class="cov8" title="1">{
+                if act, found := actualMap[use]; found </span><span class="cov8" title="1">{
+                        cmdPath := joinPath(parentPath, use)
+                        validateCommand(cmdPath, exp, act, result)
+                }</span>
+        }
+}
+
+func validateCommand(path string, expected *contract.Command, actual *inspector.InspectedCommand, result *ValidationResult) <span class="cov8" title="1">{
+        // Validate Use field (should already match, but just in case)
+        if expected.Use != actual.Use </span><span class="cov0" title="0">{
+                result.AddError(ErrorTypeMismatch, path, expected.Use, actual.Use, "Mismatch in 'use' field")
+        }</span>
+
+        // Validate Short description
+        <span class="cov8" title="1">if expected.Short != "" &amp;&amp; expected.Short != actual.Short </span><span class="cov0" title="0">{
+                result.AddError(ErrorTypeMismatch, path, expected.Short, actual.Short, "Mismatch in short description")
+        }</span>
+
+        // Validate Long description if specified
+        <span class="cov8" title="1">if expected.Long != "" &amp;&amp; expected.Long != actual.Long </span><span class="cov0" title="0">{
+                result.AddError(ErrorTypeMismatch, path, expected.Long, actual.Long, "Mismatch in long description")
+        }</span>
+
+        // Validate flags
+        <span class="cov8" title="1">validateFlags(path, expected.Flags, actual.Flags, result)
+
+        // Validate subcommands recursively
+        validateCommands(path, expected.Commands, actual.Commands, result)</span>
+}
+
+func validateFlags(parentPath string, expected []contract.Flag, actual []inspector.InspectedFlag, result *ValidationResult) <span class="cov8" title="1">{
+        // Create maps for easier lookup
+        expectedMap := make(map[string]*contract.Flag)
+        for i := range expected </span><span class="cov8" title="1">{
+                expectedMap[expected[i].Name] = &amp;expected[i]
+        }</span>
+
+        <span class="cov8" title="1">actualMap := make(map[string]*inspector.InspectedFlag)
+        for i := range actual </span><span class="cov8" title="1">{
+                actualMap[actual[i].Name] = &amp;actual[i]
+        }</span>
+
+        // Check for missing flags
+        <span class="cov8" title="1">for _, exp := range expected </span><span class="cov8" title="1">{
+                flagPath := joinPath(parentPath, "--"+exp.Name)
+                if _, found := actualMap[exp.Name]; !found </span><span class="cov8" title="1">{
+                        result.AddError(ErrorTypeMissing, flagPath, exp.Name, "", "flag")
+                }</span>
+        }
+
+        // Check for unexpected flags
+        <span class="cov8" title="1">for _, act := range actual </span><span class="cov8" title="1">{
+                flagPath := joinPath(parentPath, "--"+act.Name)
+                if _, found := expectedMap[act.Name]; !found </span><span class="cov8" title="1">{
+                        result.AddError(ErrorTypeUnexpected, flagPath, "", act.Name, "flag")
+                }</span>
+        }
+
+        // Validate matching flags
+        <span class="cov8" title="1">for name, exp := range expectedMap </span><span class="cov8" title="1">{
+                if act, found := actualMap[name]; found </span><span class="cov8" title="1">{
+                        flagPath := joinPath(parentPath, "--"+name)
+                        validateFlag(flagPath, exp, act, result)
+                }</span>
+        }
+}
+
+func validateFlag(path string, expected *contract.Flag, actual *inspector.InspectedFlag, result *ValidationResult) <span class="cov8" title="1">{
+        // Validate shorthand
+        if expected.Shorthand != "" &amp;&amp; expected.Shorthand != actual.Shorthand </span><span class="cov8" title="1">{
+                result.AddError(ErrorTypeMismatch, path, expected.Shorthand, actual.Shorthand, "Flag shorthand mismatch")
+        }</span>
+
+        // Validate usage/description
+        <span class="cov8" title="1">if expected.Usage != "" &amp;&amp; expected.Usage != actual.Usage </span><span class="cov0" title="0">{
+                result.AddError(ErrorTypeMismatch, path, expected.Usage, actual.Usage, "Flag usage mismatch")
+        }</span>
+
+        // Validate type
+        <span class="cov8" title="1">if expected.Type != actual.Type </span><span class="cov8" title="1">{
+                result.AddError(ErrorTypeInvalidType, path, expected.Type, actual.Type, "Flag type mismatch")
+        }</span>
+
+        // Validate persistence
+        <span class="cov8" title="1">if expected.Persistent != actual.Persistent </span><span class="cov8" title="1">{
+                expectedPersistence := "local"
+                actualPersistence := "local"
+                if expected.Persistent </span><span class="cov8" title="1">{
+                        expectedPersistence = "persistent"
+                }</span>
+                <span class="cov8" title="1">if actual.Persistent </span><span class="cov0" title="0">{
+                        actualPersistence = "persistent"
+                }</span>
+                <span class="cov8" title="1">result.AddError(ErrorTypeMismatch, path, expectedPersistence, actualPersistence, "Flag persistence mismatch")</span>
+        }
+}
+
+func joinPath(parent, child string) string <span class="cov8" title="1">{
+        if parent == "" </span><span class="cov8" title="1">{
+                return child
+        }</span>
+        <span class="cov8" title="1">return fmt.Sprintf("%s %s", parent, strings.TrimSpace(child))</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package main
+
+import (
+        "github.com/hiAndrewQuinn/cliguard/cmd"
+)
+
+func main() <span class="cov0" title="0">{
+        cmd.Execute()
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
