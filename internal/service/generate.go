@@ -93,4 +93,3 @@ func (s *GenerateService) inspectedCommandToContractCommand(cmd inspector.Inspec
 		Commands: s.inspectedCommandsToContractCommands(cmd.Commands),
 	}
 }
-

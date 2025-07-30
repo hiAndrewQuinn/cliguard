@@ -222,6 +222,121 @@ flags:
 				}
 			},
 		},
+		{
+			name: "all_new_flag_types",
+			yamlContent: `
+use: testcli
+short: Test CLI with new flag types
+flags:
+  # Integer variants
+  - name: int8-flag
+    type: int8
+    usage: Int8 flag
+  - name: int16-flag
+    type: int16
+    usage: Int16 flag
+  - name: int32-flag
+    type: int32
+    usage: Int32 flag
+  - name: uint-flag
+    type: uint
+    usage: Uint flag
+  - name: uint8-flag
+    type: uint8
+    usage: Uint8 flag
+  - name: uint16-flag
+    type: uint16
+    usage: Uint16 flag
+  - name: uint32-flag
+    type: uint32
+    usage: Uint32 flag
+  - name: uint64-flag
+    type: uint64
+    usage: Uint64 flag
+  # Float variants
+  - name: float32-flag
+    type: float32
+    usage: Float32 flag
+  # Slice types
+  - name: int-slice-flag
+    type: intSlice
+    usage: Int slice flag
+  - name: int32-slice-flag
+    type: int32Slice
+    usage: Int32 slice flag
+  - name: int64-slice-flag
+    type: int64Slice
+    usage: Int64 slice flag
+  - name: uint-slice-flag
+    type: uintSlice
+    usage: Uint slice flag
+  - name: float32-slice-flag
+    type: float32Slice
+    usage: Float32 slice flag
+  - name: float64-slice-flag
+    type: float64Slice
+    usage: Float64 slice flag
+  - name: bool-slice-flag
+    type: boolSlice
+    usage: Bool slice flag
+  - name: duration-slice-flag
+    type: durationSlice
+    usage: Duration slice flag
+  # Map types
+  - name: string-to-string-flag
+    type: stringToString
+    usage: String to string map flag
+  - name: string-to-int64-flag
+    type: stringToInt64
+    usage: String to int64 map flag
+  # Network types
+  - name: ip-flag
+    type: ip
+    usage: IP address flag
+  - name: ip-slice-flag
+    type: ipSlice
+    usage: IP slice flag
+  - name: ip-mask-flag
+    type: ipMask
+    usage: IP mask flag
+  - name: ip-net-flag
+    type: ipNet
+    usage: IP net flag
+  # Binary types
+  - name: bytes-hex-flag
+    type: bytesHex
+    usage: Bytes hex flag
+  - name: bytes-base64-flag
+    type: bytesBase64
+    usage: Bytes base64 flag
+  # Special types
+  - name: count-flag
+    type: count
+    usage: Count flag
+`,
+			wantErr: false,
+			validate: func(t *testing.T, c *Contract) {
+				if len(c.Flags) != 26 {
+					t.Errorf("len(Flags) = %d, want 26", len(c.Flags))
+				}
+				// Verify all types are parsed correctly
+				expectedTypes := []string{
+					"int8", "int16", "int32", "uint", "uint8", "uint16", "uint32", "uint64",
+					"float32", "intSlice", "int32Slice", "int64Slice", "uintSlice",
+					"float32Slice", "float64Slice", "boolSlice", "durationSlice",
+					"stringToString", "stringToInt64", "ip", "ipSlice", "ipMask", "ipNet",
+					"bytesHex", "bytesBase64", "count",
+				}
+				if len(expectedTypes) != len(c.Flags) {
+					t.Errorf("expectedTypes count mismatch: got %d, want %d", len(expectedTypes), len(c.Flags))
+				}
+				for i, expectedType := range expectedTypes {
+					if i < len(c.Flags) && c.Flags[i].Type != expectedType {
+						t.Errorf("Flag[%d].Type = %q, want %q", i, c.Flags[i].Type, expectedType)
+					}
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {

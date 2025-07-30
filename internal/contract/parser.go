@@ -107,8 +107,33 @@ func validateFlags(flags []Flag) error {
 
 		// Validate flag type
 		validTypes := map[string]bool{
+			// Basic types (existing)
 			"string": true, "bool": true, "int": true, "int64": true,
 			"float64": true, "duration": true, "stringSlice": true,
+
+			// Integer variants
+			"int8": true, "int16": true, "int32": true,
+			"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
+
+			// Float variants
+			"float32": true,
+
+			// Slice types
+			"intSlice": true, "int32Slice": true, "int64Slice": true,
+			"uintSlice": true, "float32Slice": true, "float64Slice": true,
+			"boolSlice": true, "durationSlice": true,
+
+			// Map types
+			"stringToString": true, "stringToInt64": true,
+
+			// Network types
+			"ip": true, "ipSlice": true, "ipMask": true, "ipNet": true,
+
+			// Binary types
+			"bytesHex": true, "bytesBase64": true,
+
+			// Special types
+			"count": true,
 		}
 		if !validTypes[flag.Type] {
 			return fmt.Errorf("flag '%s': invalid type '%s'", flag.Name, flag.Type)

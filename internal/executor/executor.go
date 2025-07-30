@@ -43,4 +43,3 @@ func (c *osCommand) Output() ([]byte, error) {
 func (c *osCommand) CombinedOutput() ([]byte, error) {
 	return c.cmd.CombinedOutput()
 }
-

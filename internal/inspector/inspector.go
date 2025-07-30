@@ -174,13 +174,54 @@ func getFlagType(flag *pflag.Flag) string {
 	
 	// Map common pflag types to simpler names
 	typeMap := map[string]string{
-		"*pflag.stringValue":     "string",
-		"*pflag.boolValue":       "bool",
-		"*pflag.intValue":        "int",
-		"*pflag.int64Value":      "int64",
-		"*pflag.float64Value":    "float64",
-		"*pflag.durationValue":   "duration",
+		// Basic types (existing)
+		"*pflag.stringValue":      "string",
+		"*pflag.boolValue":        "bool",
+		"*pflag.intValue":         "int",
+		"*pflag.int64Value":       "int64",
+		"*pflag.float64Value":     "float64",
+		"*pflag.durationValue":    "duration",
 		"*pflag.stringSliceValue": "stringSlice",
+		
+		// Integer variants
+		"*pflag.int8Value":        "int8",
+		"*pflag.int16Value":       "int16",
+		"*pflag.int32Value":       "int32",
+		"*pflag.uint8Value":       "uint8",
+		"*pflag.uint16Value":      "uint16",
+		"*pflag.uint32Value":      "uint32",
+		"*pflag.uint64Value":      "uint64",
+		"*pflag.uintValue":        "uint",
+		
+		// Float variants
+		"*pflag.float32Value":     "float32",
+		
+		// Slice types
+		"*pflag.intSliceValue":     "intSlice",
+		"*pflag.int32SliceValue":   "int32Slice",
+		"*pflag.int64SliceValue":   "int64Slice",
+		"*pflag.uintSliceValue":    "uintSlice",
+		"*pflag.float32SliceValue": "float32Slice",
+		"*pflag.float64SliceValue": "float64Slice",
+		"*pflag.boolSliceValue":    "boolSlice",
+		"*pflag.durationSliceValue": "durationSlice",
+		
+		// Map types
+		"*pflag.stringToStringValue": "stringToString",
+		"*pflag.stringToInt64Value":  "stringToInt64",
+		
+		// Network types
+		"*pflag.ipValue":      "ip",
+		"*pflag.ipSliceValue": "ipSlice",
+		"*pflag.ipMaskValue":  "ipMask",
+		"*pflag.ipNetValue":   "ipNet",
+		
+		// Binary types
+		"*pflag.bytesHexValue":    "bytesHex",
+		"*pflag.bytesBase64Value": "bytesBase64",
+		
+		// Special types
+		"*pflag.countValue": "count",
 	}
 	
 	if simpleType, ok := typeMap[flagType]; ok {

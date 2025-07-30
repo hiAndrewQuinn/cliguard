@@ -254,4 +254,3 @@ func (i *Inspector) parseInspectorOutput(output []byte) (*InspectedCLI, error) {
 	}
 	return &cli, nil
 }
-
