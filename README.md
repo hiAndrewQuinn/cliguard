@@ -4,10 +4,11 @@ A contract-based validation tool for Cobra CLIs that ensures your command struct
 
 ## Overview
 
-Cliguard validates Go CLIs built with [Cobra](https://github.com/spf13/cobra) against a YAML contract file. It helps maintain API stability by detecting unintended changes to commands, flags, and their configurations.
+Cliguard validates Go CLIs built with [Cobra](https://github.com/spf13/cobra) against a YAML contract file. It helps maintain API stability by detecting unintended changes to commands, flags, and their configurations. It can also generate contract files from existing CLIs, making it easy to get started.
 
 ## Features
 
+- **Contract generation**: Automatically generate contract files from existing Cobra CLIs
 - **Contract-based validation**: Define your expected CLI structure in a simple YAML file
 - **Comprehensive checking**: Validates commands, subcommands, flags, types, and descriptions
 - **CI/CD friendly**: Exit codes and clear output make it perfect for automated pipelines
@@ -84,7 +85,13 @@ Validating CLI structure against contract...
 
 ### Using Cliguard in Your Project
 
-1. Create a `cliguard.yaml` contract file in your project root:
+1. Generate a contract file from your existing CLI:
+
+```bash
+cliguard generate --project-path . --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
+```
+
+This creates a `cliguard.yaml` file like:
 
 ```yaml
 use: myapp
@@ -109,7 +116,7 @@ commands:
     short: Run database migrations
 ```
 
-2. Run validation:
+2. Run validation to ensure your CLI structure remains consistent:
 
 ```bash
 cliguard validate --project-path . --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
@@ -161,6 +168,26 @@ Supported flag types:
 - `stringSlice`
 
 ## Usage
+
+### Generate a Contract
+
+Generate a contract file from an existing Cobra CLI:
+
+```bash
+cliguard generate --project-path /path/to/project
+```
+
+With a custom output location:
+
+```bash
+cliguard generate --project-path /path/to/project --output my-contract.yaml
+```
+
+For projects where the root command is returned by a function:
+
+```bash
+cliguard generate --project-path . --entrypoint "github.com/org/project/cmd.NewRootCmd"
+```
 
 ### Basic Validation
 

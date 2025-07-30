@@ -53,6 +53,23 @@ and flags match the expected specification.`,
 
 	rootCmd.AddCommand(validateCmd)
 
+	// Generate command
+	generateCmd := &cobra.Command{
+		Use:   "generate",
+		Short: "Generate a contract file from a Cobra CLI",
+		Long: `Generate inspects a Go project's Cobra command structure and generates
+a YAML contract file that can be used for validation. This is useful for
+creating an initial contract from an existing CLI.`,
+		RunE: runGenerate,
+	}
+
+	generateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (required)")
+	generateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
+
+	generateCmd.MarkFlagRequired("project-path")
+
+	rootCmd.AddCommand(generateCmd)
+
 	return rootCmd
 }
 
@@ -115,4 +132,46 @@ var validateRunner ValidateRunner = NewDefaultValidateRunner()
 
 func runValidate(cmd *cobra.Command, args []string) error {
 	return validateRunner.Run(cmd, projectPath, contractPath, entrypoint)
+}
+
+// GenerateRunner interface for dependency injection
+type GenerateRunner interface {
+	Run(cmd *cobra.Command, projectPath, entrypoint string) error
+}
+
+// DefaultGenerateRunner is the default implementation
+type DefaultGenerateRunner struct {
+	service *service.GenerateService
+}
+
+// NewDefaultGenerateRunner creates a new default runner
+func NewDefaultGenerateRunner() *DefaultGenerateRunner {
+	return &DefaultGenerateRunner{
+		service: service.NewGenerateService(),
+	}
+}
+
+// Run executes the generation
+func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string) error {
+	opts := service.GenerateOptions{
+		ProjectPath: projectPath,
+		Entrypoint:  entrypoint,
+	}
+
+	// Run generation
+	yamlContent, err := r.service.Generate(opts)
+	if err != nil {
+		return err
+	}
+
+	// Print YAML to stdout
+	fmt.Print(yamlContent)
+	return nil
+}
+
+// Global runner for testing
+var generateRunner GenerateRunner = NewDefaultGenerateRunner()
+
+func runGenerate(cmd *cobra.Command, args []string) error {
+	return generateRunner.Run(cmd, projectPath, entrypoint)
 }

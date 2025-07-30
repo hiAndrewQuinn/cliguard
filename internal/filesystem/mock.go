@@ -40,14 +40,14 @@ func (fs *MockFileSystem) MkdirTemp(dir, pattern string) (string, error) {
 func (fs *MockFileSystem) RemoveAll(path string) error {
 	// Remove the directory
 	delete(fs.Directories, path)
-	
+
 	// Remove all files under this path
 	for filePath := range fs.Files {
 		if filepath.HasPrefix(filePath, path) {
 			delete(fs.Files, filePath)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -58,7 +58,7 @@ func (fs *MockFileSystem) WriteFile(name string, data []byte, perm os.FileMode) 
 	if !fs.directoryExists(dir) {
 		return fmt.Errorf("directory %s does not exist", dir)
 	}
-	
+
 	fs.Files[name] = data
 	return nil
 }
@@ -76,15 +76,15 @@ func (fs *MockFileSystem) Stat(name string) (os.FileInfo, error) {
 	if err, ok := fs.StatErrors[name]; ok {
 		return nil, err
 	}
-	
+
 	if _, ok := fs.Files[name]; ok {
 		return &mockFileInfo{name: filepath.Base(name), isDir: false}, nil
 	}
-	
+
 	if fs.directoryExists(name) {
 		return &mockFileInfo{name: filepath.Base(name), isDir: true}, nil
 	}
-	
+
 	return nil, os.ErrNotExist
 }
 
@@ -93,25 +93,25 @@ func (fs *MockFileSystem) directoryExists(path string) bool {
 	if path == "/" || path == "." {
 		return true
 	}
-	
+
 	if exists, ok := fs.Directories[path]; ok && exists {
 		return true
 	}
-	
+
 	// Check if it's a parent of any existing directory
 	for dir := range fs.Directories {
 		if filepath.HasPrefix(dir, path) {
 			return true
 		}
 	}
-	
+
 	// Check if it's a parent of any existing file
 	for file := range fs.Files {
 		if filepath.HasPrefix(file, path) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 

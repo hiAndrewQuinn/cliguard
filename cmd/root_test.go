@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	
+
 	"github.com/spf13/cobra"
 )
 
@@ -166,4 +166,3 @@ func TestIntegration_ValidateCommand(t *testing.T) {
 		t.Errorf("Expected validation result in output, got stdout: %q, stderr: %q", outBuf.String(), errBuf.String())
 	}
 }
-

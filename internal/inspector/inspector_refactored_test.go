@@ -116,8 +116,8 @@ func TestInspector_generateInspectorCode(t *testing.T) {
 			},
 		},
 		{
-			name: "no entrypoint",
-			info: &EntrypointInfo{},
+			name:    "no entrypoint",
+			info:    &EntrypointInfo{},
 			wantErr: false,
 			check: func(code string) error {
 				if !contains(code, "findRootCommand()") {
@@ -163,10 +163,10 @@ func TestInspector_Inspect(t *testing.T) {
 			setupMocks: func(fs *filesystem.MockFileSystem, exec *executor.MockExecutor) {
 				// Mock go.mod file
 				fs.Files["/test/project/go.mod"] = []byte("module github.com/test/repo\n\ngo 1.21")
-				
+
 				// Mock successful commands
 				exec.Results = map[string]executor.MockResult{
-					"go mod init cliguard-inspector": {Output: []byte("go: creating new go.mod"), Error: nil},
+					"go mod init cliguard-inspector":                          {Output: []byte("go: creating new go.mod"), Error: nil},
 					"go mod edit -replace github.com/test/repo=/test/project": {Output: []byte(""), Error: nil},
 					"go get ./...": {Output: []byte(""), Error: nil},
 					"go run inspector.go": {
@@ -232,7 +232,7 @@ func TestInspector_Inspect(t *testing.T) {
 				ProjectPath: "/test/project",
 				Entrypoint:  "invalid",
 			},
-			setupMocks: func(fs *filesystem.MockFileSystem, exec *executor.MockExecutor) {},
+			setupMocks:    func(fs *filesystem.MockFileSystem, exec *executor.MockExecutor) {},
 			wantErr:       true,
 			wantErrString: "failed to parse entrypoint",
 		},
@@ -262,7 +262,7 @@ func TestInspector_Inspect(t *testing.T) {
 			setupMocks: func(fs *filesystem.MockFileSystem, exec *executor.MockExecutor) {
 				exec.Results = map[string]executor.MockResult{
 					"go mod init cliguard-inspector": {Output: []byte(""), Error: nil},
-					"go get ./...": {Output: []byte(""), Error: nil},
+					"go get ./...":                   {Output: []byte(""), Error: nil},
 					"go run inspector.go": {
 						Output: []byte("compilation error"),
 						Error:  errors.New("exit status 1"),
@@ -281,7 +281,7 @@ func TestInspector_Inspect(t *testing.T) {
 			setupMocks: func(fs *filesystem.MockFileSystem, exec *executor.MockExecutor) {
 				exec.Results = map[string]executor.MockResult{
 					"go mod init cliguard-inspector": {Output: []byte(""), Error: nil},
-					"go get ./...": {Output: []byte(""), Error: nil},
+					"go get ./...":                   {Output: []byte(""), Error: nil},
 					"go run inspector.go": {
 						Output: []byte("invalid json"),
 						Error:  nil,

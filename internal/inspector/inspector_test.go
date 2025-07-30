@@ -9,9 +9,9 @@ import (
 
 func TestGetModuleName(t *testing.T) {
 	tests := []struct {
-		name       string
+		name         string
 		goModContent string
-		want       string
+		want         string
 	}{
 		{
 			name: "simple_module",
@@ -52,7 +52,7 @@ go 1.21
 			want: "github.com/space/project",
 		},
 		{
-			name:       "no_module_line",
+			name: "no_module_line",
 			goModContent: `go 1.21
 
 require (
@@ -62,9 +62,9 @@ require (
 			want: "",
 		},
 		{
-			name:       "empty_content",
+			name:         "empty_content",
 			goModContent: "",
-			want:       "",
+			want:         "",
 		},
 	}
 
@@ -93,7 +93,7 @@ func TestInspectorTemplateCompiles(t *testing.T) {
 	if !strings.Contains(inspectorTemplate, "InspectedCLI") {
 		t.Error("Inspector template should contain InspectedCLI type")
 	}
-	
+
 	// Test that the template compiles and executes
 	tmpl, err := template.New("inspector").Parse(inspectorTemplate)
 	if err != nil {
@@ -128,8 +128,8 @@ func TestInspectorTemplateCompiles(t *testing.T) {
 				ImportAlias    string
 				EntrypointFunc string
 			}{
-				ImportPath:  "",
-				ImportAlias: "",
+				ImportPath:     "",
+				ImportAlias:    "",
 				EntrypointFunc: "",
 			},
 		},

@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -64,17 +65,17 @@ func TestExecute(t *testing.T) {
 				t.Errorf("Execute() panicked: %v", r)
 			}
 		}()
-		
+
 		// We can't easily test Execute() without exiting, but we can test ExecuteWithWriter
 		buf := new(bytes.Buffer)
-		
+
 		// Save os.Args
 		oldArgs := os.Args
 		defer func() { os.Args = oldArgs }()
-		
+
 		// Set args to trigger help
 		os.Args = []string{"cliguard", "--help"}
-		
+
 		// This will print help and return without error
 		cmd := NewRootCmd()
 		cmd.SetOut(buf)
@@ -85,7 +86,7 @@ func TestExecute(t *testing.T) {
 	// Restore stderr
 	w.Close()
 	os.Stderr = oldStderr
-	
+
 	// Read any output
 	var output bytes.Buffer
 	io.Copy(&output, r)
@@ -140,7 +141,7 @@ func TestRunValidate_Success(t *testing.T) {
 	if len(mockRunner.Calls) != 1 {
 		t.Errorf("Expected 1 call to runner, got %d", len(mockRunner.Calls))
 	}
-	
+
 	call := mockRunner.Calls[0]
 	if call.ProjectPath != "/tmp/test" {
 		t.Errorf("ProjectPath = %q, want %q", call.ProjectPath, "/tmp/test")
@@ -156,7 +157,7 @@ func TestRunValidate_Success(t *testing.T) {
 func TestDefaultValidateRunner(t *testing.T) {
 	// Create a test service with mocked dependencies
 	runner := NewDefaultValidateRunner()
-	
+
 	// Mock the service dependencies
 	mockContractLoader := func(path string) (*contract.Contract, error) {
 		if path == "/test/contract.yaml" {
@@ -167,7 +168,7 @@ func TestDefaultValidateRunner(t *testing.T) {
 		}
 		return nil, errors.New("contract not found")
 	}
-	
+
 	mockInspector := func(projectPath, entrypoint string) (*inspector.InspectedCLI, error) {
 		if projectPath == "/test/project" {
 			return &inspector.InspectedCLI{
@@ -177,16 +178,16 @@ func TestDefaultValidateRunner(t *testing.T) {
 		}
 		return nil, errors.New("project not found")
 	}
-	
+
 	runner.service.ContractLoader = mockContractLoader
 	runner.service.Inspector = mockInspector
-	
+
 	// Test successful validation
 	t.Run("success", func(t *testing.T) {
 		// Create a temp directory that actually exists
 		tmpDir := t.TempDir()
 		contractPath := filepath.Join(tmpDir, "contract.yaml")
-		
+
 		// Update mocks to use the real paths
 		runner.service.ContractLoader = func(path string) (*contract.Contract, error) {
 			if path == contractPath {
@@ -197,7 +198,7 @@ func TestDefaultValidateRunner(t *testing.T) {
 			}
 			return nil, errors.New("contract not found")
 		}
-		
+
 		runner.service.Inspector = func(projectPath, entrypoint string) (*inspector.InspectedCLI, error) {
 			if projectPath == tmpDir {
 				return &inspector.InspectedCLI{
@@ -207,28 +208,28 @@ func TestDefaultValidateRunner(t *testing.T) {
 			}
 			return nil, errors.New("project not found")
 		}
-		
+
 		cmd := &cobra.Command{}
 		buf := new(bytes.Buffer)
 		cmd.SetOut(buf)
-		
+
 		err := runner.Run(cmd, tmpDir, contractPath, "test.Func")
 		if err != nil {
 			t.Errorf("Run() error = %v, want nil", err)
 		}
-		
+
 		output := buf.String()
 		if !contains(output, "Validation passed") {
 			t.Errorf("Expected success message in output, got: %q", output)
 		}
 	})
-	
+
 	// Test error cases
 	t.Run("project not found", func(t *testing.T) {
 		cmd := &cobra.Command{}
 		buf := new(bytes.Buffer)
 		cmd.SetOut(buf)
-		
+
 		err := runner.Run(cmd, "/nonexistent", "/test/contract.yaml", "test.Func")
 		if err == nil {
 			t.Error("Expected error for nonexistent project")
@@ -237,15 +238,15 @@ func TestDefaultValidateRunner(t *testing.T) {
 			t.Errorf("Error = %q, want to contain 'project path does not exist'", err.Error())
 		}
 	})
-	
+
 	t.Run("contract not found", func(t *testing.T) {
 		// Create a temp directory for the project
 		tmpDir := t.TempDir()
-		
+
 		cmd := &cobra.Command{}
 		buf := new(bytes.Buffer)
 		cmd.SetOut(buf)
-		
+
 		err := runner.Run(cmd, tmpDir, "/nonexistent/contract.yaml", "test.Func")
 		if err == nil {
 			t.Error("Expected error for nonexistent contract")
@@ -259,13 +260,13 @@ func TestDefaultValidateRunner(t *testing.T) {
 func TestValidateServiceIntegration(t *testing.T) {
 	// Test the actual ValidateService
 	svc := service.NewValidateService()
-	
+
 	// Test with nonexistent project path
 	t.Run("nonexistent project", func(t *testing.T) {
 		opts := service.ValidateOptions{
 			ProjectPath: "/nonexistent/path",
 		}
-		
+
 		_, err := svc.Validate(opts)
 		if err == nil {
 			t.Error("Expected error for nonexistent project")
@@ -274,24 +275,24 @@ func TestValidateServiceIntegration(t *testing.T) {
 			t.Errorf("Error = %q, want to contain 'project path does not exist'", err.Error())
 		}
 	})
-	
+
 	// Test with existing but invalid project
 	t.Run("invalid project", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		
+
 		// Create a dummy contract file
 		contractPath := filepath.Join(tmpDir, "cliguard.yaml")
 		contractContent := `use: test
 short: Test CLI
 `
 		os.WriteFile(contractPath, []byte(contractContent), 0644)
-		
+
 		opts := service.ValidateOptions{
 			ProjectPath:  tmpDir,
 			ContractPath: contractPath,
 			Entrypoint:   "test.Func",
 		}
-		
+
 		_, err := svc.Validate(opts)
 		if err == nil {
 			t.Error("Expected error for invalid project")
@@ -306,14 +307,14 @@ short: Test CLI
 func TestCommandFlags(t *testing.T) {
 	cmd := NewRootCmd()
 	validateCmd, _, _ := cmd.Find([]string{"validate"})
-	
+
 	// Test flag defaults
 	t.Run("flag defaults", func(t *testing.T) {
 		// Reset flags
 		projectPath = ""
 		contractPath = ""
 		entrypoint = ""
-		
+
 		if projectPath != "" {
 			t.Errorf("projectPath default = %q, want empty", projectPath)
 		}
@@ -324,7 +325,7 @@ func TestCommandFlags(t *testing.T) {
 			t.Errorf("entrypoint default = %q, want empty", entrypoint)
 		}
 	})
-	
+
 	// Test flag parsing
 	t.Run("flag parsing", func(t *testing.T) {
 		// Parse flags
@@ -333,7 +334,7 @@ func TestCommandFlags(t *testing.T) {
 			"--contract", "/test/contract.yaml",
 			"--entrypoint", "test.NewCmd",
 		})
-		
+
 		// Check values were set
 		if flag := validateCmd.Flag("project-path"); flag.Value.String() != "/test/path" {
 			t.Errorf("project-path = %q, want %q", flag.Value.String(), "/test/path")
@@ -366,21 +367,21 @@ func TestValidationErrors(t *testing.T) {
 			Short: "Actual CLI",
 		}, nil
 	}
-	
+
 	validateRunner = runner
-	
+
 	// Run command - this will exit(1) so we can't test the full flow
 	// But we can verify the setup works
 	cmd := NewRootCmd()
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
 	cmd.SetErr(buf)
-	
+
 	// Create temp dir
 	tmpDir := t.TempDir()
 	contractPath := filepath.Join(tmpDir, "contract.yaml")
 	os.WriteFile(contractPath, []byte("use: test\nshort: Test"), 0644)
-	
+
 	// The actual test would need to handle os.Exit
 	// For now we just verify the command is set up correctly
 	cmd.SetArgs([]string{
@@ -388,7 +389,7 @@ func TestValidationErrors(t *testing.T) {
 		"--project-path", tmpDir,
 		"--contract", contractPath,
 	})
-	
+
 	// We can't easily test this without handling os.Exit
 	// The integration tests cover this scenario
 }
@@ -398,11 +399,11 @@ func TestValidationResultTypes(t *testing.T) {
 	result := &validator.ValidationResult{
 		Valid: true,
 	}
-	
+
 	if !result.IsValid() {
 		t.Error("Expected valid result")
 	}
-	
+
 	// Add an error
 	result.AddError(
 		validator.ErrorTypeMismatch,
@@ -411,26 +412,153 @@ func TestValidationResultTypes(t *testing.T) {
 		"actual",
 		"Test mismatch",
 	)
-	
+
 	if result.IsValid() {
 		t.Error("Expected invalid result after adding error")
 	}
-	
+
 	// Test PrintReport doesn't panic
 	buf := new(bytes.Buffer)
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	
+
 	result.PrintReport()
-	
+
 	w.Close()
 	os.Stdout = oldStdout
 	io.Copy(buf, r)
-	
+
 	output := buf.String()
 	if !contains(output, "Test mismatch") {
 		t.Errorf("PrintReport output = %q, want to contain 'Test mismatch'", output)
 	}
 }
 
+// MockGenerateRunner for testing the generate command
+type MockGenerateRunner struct {
+	RunFunc func(cmd *cobra.Command, projectPath, entrypoint string) error
+}
+
+func (m *MockGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string) error {
+	if m.RunFunc != nil {
+		return m.RunFunc(cmd, projectPath, entrypoint)
+	}
+	return nil
+}
+
+func TestGenerateCommand(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []string
+		setupMock func(*MockGenerateRunner)
+		wantErr   bool
+		checkFunc func(t *testing.T, output string)
+	}{
+		{
+			name: "successful generation",
+			args: []string{"generate", "--project-path", "/test/project", "--entrypoint", "cmd.NewRootCmd"},
+			setupMock: func(m *MockGenerateRunner) {
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+					if projectPath != "/test/project" {
+						t.Errorf("projectPath = %q, want %q", projectPath, "/test/project")
+					}
+					if entrypoint != "cmd.NewRootCmd" {
+						t.Errorf("entrypoint = %q, want %q", entrypoint, "cmd.NewRootCmd")
+					}
+					// Simulate the YAML output that would be printed by the real runner
+					fmt.Fprint(cmd.OutOrStdout(), "# Cliguard contract file\nuse: testapp\n")
+					return nil
+				}
+			},
+			wantErr: false,
+			checkFunc: func(t *testing.T, output string) {
+				if !contains(output, "# Cliguard contract file") {
+					t.Errorf("output = %q, want to contain %q", output, "# Cliguard contract file")
+				}
+				if !contains(output, "use: testapp") {
+					t.Errorf("output = %q, want to contain %q", output, "use: testapp")
+				}
+			},
+		},
+		{
+			name: "missing required project-path",
+			args: []string{"generate"},
+			setupMock: func(m *MockGenerateRunner) {
+				// Mock shouldn't be called
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+					t.Error("RunFunc should not be called")
+					return nil
+				}
+			},
+			wantErr: true,
+			checkFunc: func(t *testing.T, output string) {
+				if !contains(output, "required flag(s) \"project-path\" not set") {
+					t.Errorf("output = %q, want to contain %q", output, "required flag(s) \"project-path\" not set")
+				}
+			},
+		},
+		{
+			name: "generation error",
+			args: []string{"generate", "--project-path", "/test/project"},
+			setupMock: func(m *MockGenerateRunner) {
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+					return errors.New("generation failed")
+				}
+			},
+			wantErr: true,
+		},
+		{
+			name: "no entrypoint specified",
+			args: []string{"generate", "--project-path", "/test/project"},
+			setupMock: func(m *MockGenerateRunner) {
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+					if entrypoint != "" {
+						t.Errorf("entrypoint = %q, want empty string", entrypoint)
+					}
+					fmt.Fprint(cmd.OutOrStdout(), "# Cliguard contract file\nuse: testapp\n")
+					return nil
+				}
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Save original runner
+			originalRunner := generateRunner
+			defer func() { generateRunner = originalRunner }()
+
+			// Create and set mock
+			mockRunner := &MockGenerateRunner{}
+			if tt.setupMock != nil {
+				tt.setupMock(mockRunner)
+			}
+			generateRunner = mockRunner
+
+			// Create command and capture output
+			rootCmd := NewRootCmd()
+			buf := new(bytes.Buffer)
+			rootCmd.SetOut(buf)
+			rootCmd.SetErr(buf)
+			rootCmd.SetArgs(tt.args)
+
+			err := rootCmd.Execute()
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error but got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			}
+
+			if tt.checkFunc != nil {
+				tt.checkFunc(t, buf.String())
+			}
+		})
+	}
+}

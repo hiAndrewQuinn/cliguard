@@ -198,7 +198,7 @@ func InspectProject(projectPath, entrypoint string) (*InspectedCLI, error) {
 		ProjectPath: projectPath,
 		Entrypoint:  entrypoint,
 	})
-	
+
 	return inspector.Inspect()
 }
 

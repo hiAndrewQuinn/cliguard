@@ -34,7 +34,7 @@ func NewInspector(config Config) *Inspector {
 	if config.Executor == nil {
 		config.Executor = &executor.OSExecutor{}
 	}
-	
+
 	return &Inspector{
 		config: config,
 	}
@@ -42,10 +42,10 @@ func NewInspector(config Config) *Inspector {
 
 // EntrypointInfo contains parsed entrypoint information
 type EntrypointInfo struct {
-	ImportPath     string
-	ImportAlias    string
-	FunctionName   string
-	IsMainPackage  bool
+	ImportPath    string
+	ImportAlias   string
+	FunctionName  string
+	IsMainPackage bool
 }
 
 // Inspect generates an inspector program and runs it to get the CLI structure
@@ -98,7 +98,7 @@ func (i *Inspector) Inspect() (*InspectedCLI, error) {
 // parseEntrypoint parses the entrypoint string into its components
 func (i *Inspector) parseEntrypoint(entrypoint string) (*EntrypointInfo, error) {
 	info := &EntrypointInfo{}
-	
+
 	if entrypoint == "" {
 		return info, nil
 	}
@@ -174,8 +174,18 @@ func (i *Inspector) setupTempModule(tempDir string, info *EntrypointInfo) error 
 
 // addReplaceDirective adds a replace directive to go.mod
 func (i *Inspector) addReplaceDirective(tempDir, moduleName string) error {
-	replaceCmd := i.config.Executor.Command("go", "mod", "edit", "-replace", 
-		fmt.Sprintf("%s=%s", moduleName, i.config.ProjectPath))
+	// Make sure we have an absolute path
+	absProjectPath := i.config.ProjectPath
+	if !filepath.IsAbs(absProjectPath) {
+		var err error
+		absProjectPath, err = filepath.Abs(absProjectPath)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path: %w", err)
+		}
+	}
+
+	replaceCmd := i.config.Executor.Command("go", "mod", "edit", "-replace",
+		fmt.Sprintf("%s=%s", moduleName, absProjectPath))
 	replaceCmd.SetDir(tempDir)
 	if output, err := replaceCmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to add replace directive: %w\nOutput: %s", err, output)
@@ -209,6 +219,14 @@ func (i *Inspector) generateInspectorCode(info *EntrypointInfo) (string, error) 
 
 // getDependencies gets the Go module dependencies
 func (i *Inspector) getDependencies(tempDir string) error {
+	// Try to run go mod tidy with -e flag to ignore errors
+	tidyCmd := i.config.Executor.Command("go", "mod", "tidy", "-e")
+	tidyCmd.SetDir(tempDir)
+	if _, err := tidyCmd.CombinedOutput(); err == nil {
+		return nil
+	}
+
+	// Fall back to regular go get
 	getCmd := i.config.Executor.Command("go", "get", "./...")
 	getCmd.SetDir(tempDir)
 	if output, err := getCmd.CombinedOutput(); err != nil {
@@ -236,3 +254,4 @@ func (i *Inspector) parseInspectorOutput(output []byte) (*InspectedCLI, error) {
 	}
 	return &cli, nil
 }
+

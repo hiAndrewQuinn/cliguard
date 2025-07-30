@@ -54,12 +54,12 @@ func (c *mockCommand) Output() ([]byte, error) {
 		Args: c.args,
 		Dir:  c.dir,
 	})
-	
+
 	key := c.commandKey()
 	if result, ok := c.executor.Results[key]; ok {
 		return result.Output, result.Error
 	}
-	
+
 	return nil, fmt.Errorf("no mock result configured for command: %s", key)
 }
 
