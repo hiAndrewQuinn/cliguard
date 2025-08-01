@@ -18,7 +18,7 @@ import (
 
 // MockValidateRunner for testing
 type MockValidateRunner struct {
-	RunFunc func(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error
+	RunFunc func(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error
 	Calls   []MockCall
 }
 
@@ -26,16 +26,18 @@ type MockCall struct {
 	ProjectPath  string
 	ContractPath string
 	Entrypoint   string
+	Force        bool
 }
 
-func (m *MockValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+func (m *MockValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error {
 	m.Calls = append(m.Calls, MockCall{
 		ProjectPath:  projectPath,
 		ContractPath: contractPath,
 		Entrypoint:   entrypoint,
+		Force:        force,
 	})
 	if m.RunFunc != nil {
-		return m.RunFunc(cmd, projectPath, contractPath, entrypoint)
+		return m.RunFunc(cmd, projectPath, contractPath, entrypoint, force)
 	}
 	return nil
 }
@@ -213,7 +215,7 @@ func TestDefaultValidateRunner(t *testing.T) {
 		buf := new(bytes.Buffer)
 		cmd.SetOut(buf)
 
-		err := runner.Run(cmd, tmpDir, contractPath, "test.Func")
+		err := runner.Run(cmd, tmpDir, contractPath, "test.Func", false)
 		if err != nil {
 			t.Errorf("Run() error = %v, want nil", err)
 		}
@@ -230,7 +232,7 @@ func TestDefaultValidateRunner(t *testing.T) {
 		buf := new(bytes.Buffer)
 		cmd.SetOut(buf)
 
-		err := runner.Run(cmd, "/nonexistent", "/test/contract.yaml", "test.Func")
+		err := runner.Run(cmd, "/nonexistent", "/test/contract.yaml", "test.Func", false)
 		if err == nil {
 			t.Error("Expected error for nonexistent project")
 		}
@@ -247,7 +249,7 @@ func TestDefaultValidateRunner(t *testing.T) {
 		buf := new(bytes.Buffer)
 		cmd.SetOut(buf)
 
-		err := runner.Run(cmd, tmpDir, "/nonexistent/contract.yaml", "test.Func")
+		err := runner.Run(cmd, tmpDir, "/nonexistent/contract.yaml", "test.Func", false)
 		if err == nil {
 			t.Error("Expected error for nonexistent contract")
 		}
@@ -437,12 +439,12 @@ func TestValidationResultTypes(t *testing.T) {
 
 // MockGenerateRunner for testing the generate command
 type MockGenerateRunner struct {
-	RunFunc func(cmd *cobra.Command, projectPath, entrypoint string) error
+	RunFunc func(cmd *cobra.Command, projectPath, entrypoint string, force bool) error
 }
 
-func (m *MockGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string) error {
+func (m *MockGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string, force bool) error {
 	if m.RunFunc != nil {
-		return m.RunFunc(cmd, projectPath, entrypoint)
+		return m.RunFunc(cmd, projectPath, entrypoint, force)
 	}
 	return nil
 }

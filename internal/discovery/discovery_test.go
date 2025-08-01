@@ -287,7 +287,7 @@ func TestPrintCandidates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			PrintCandidates(&buf, tt.candidates)
+			PrintCandidates(&buf, tt.candidates, false)
 			
 			output := buf.String()
 			for _, want := range tt.wantOutput {

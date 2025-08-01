@@ -305,7 +305,7 @@ func (d *Discoverer) extractFunctionSignature(content string, lineNumber int) st
 }
 
 // PrintCandidates prints the discovered candidates in a user-friendly format
-func PrintCandidates(w io.Writer, candidates []EntrypointCandidate) {
+func PrintCandidates(w io.Writer, candidates []EntrypointCandidate, force bool) {
 	if len(candidates) == 0 {
 		fmt.Fprintln(w, "No CLI entrypoints found.")
 		fmt.Fprintln(w, "Try specifying the entrypoint manually with --entrypoint flag.")
@@ -328,6 +328,15 @@ func PrintCandidates(w io.Writer, candidates []EntrypointCandidate) {
 			fmt.Fprintf(w, "   Package: %s\n", candidate.PackagePath)
 		}
 		
+		// Add warning for non-Cobra frameworks
+		if candidate.Framework != "cobra" {
+			fmt.Fprintf(w, "\n   ⚠️  Note: cliguard currently only generates and validates Cobra CLIs.\n")
+			fmt.Fprintf(w, "   Support for %s is coming soon!", candidate.Framework)
+			if force {
+				fmt.Fprintf(w, "\n   (Use --force flag with generate/validate to proceed anyway)")
+			}
+		}
+		
 		fmt.Fprintln(w)
 	}
 
@@ -338,6 +347,14 @@ func PrintCandidates(w io.Writer, candidates []EntrypointCandidate) {
 			fmt.Fprintf(w, "  --entrypoint %s.NewRootCmd\n", candidates[0].PackagePath)
 		} else {
 			fmt.Fprintf(w, "  --entrypoint %s\n", candidates[0].PackagePath)
+		}
+		
+		// Add warning if suggested entrypoint is not Cobra
+		if candidates[0].Framework != "cobra" {
+			fmt.Fprintf(w, "\n⚠️  Note: This %s entrypoint is not currently supported by cliguard.\n", candidates[0].Framework)
+			if force {
+				fmt.Fprintln(w, "Use --force flag with generate/validate to proceed anyway.")
+			}
 		}
 	}
 }

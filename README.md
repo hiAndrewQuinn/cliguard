@@ -6,6 +6,8 @@ A contract-based validation tool for Cobra CLIs that ensures your command struct
 
 Cliguard validates Go CLIs built with [Cobra](https://github.com/spf13/cobra) against a YAML contract file. It helps maintain API stability by detecting unintended changes to commands, flags, and their configurations. It can also generate contract files from existing CLIs, making it easy to get started.
 
+**Current Focus**: Cliguard currently supports Cobra-based CLIs exclusively. While our `discover` command can identify entrypoints from other popular CLI frameworks (urfave/cli, standard library flag, kingpin), contract generation and validation features are limited to Cobra at this time.
+
 ## Features
 
 - **Entrypoint discovery**: Automatically find CLI entrypoints in Go projects across multiple frameworks
@@ -176,11 +178,11 @@ Supported flag types:
 
 ### Discover Entrypoints
 
-Find CLI entrypoints in a Go project by analyzing common CLI framework patterns. Supports:
-- Cobra (`github.com/spf13/cobra`)
-- urfave/cli (`github.com/urfave/cli`)
-- Standard library flag package
-- Kingpin (`github.com/alecthomas/kingpin`)
+Find CLI entrypoints in a Go project by analyzing common CLI framework patterns. The discover command can identify entrypoints from:
+- ✅ Cobra (`github.com/spf13/cobra`) - **Fully supported**
+- ⏳ urfave/cli (`github.com/urfave/cli`) - *Discovery only, generation/validation coming soon*
+- ⏳ Standard library flag package - *Discovery only, generation/validation coming soon*
+- ⏳ Kingpin (`github.com/alecthomas/kingpin`) - *Discovery only, generation/validation coming soon*
 
 ```bash
 cliguard discover --project-path /path/to/project
@@ -246,6 +248,20 @@ For projects where the root command is returned by a function:
 # From your project directory
 cliguard generate --entrypoint "github.com/org/project/cmd.NewRootCmd" > cliguard.yaml
 ```
+
+### Using the --force Flag
+
+If you're working with a non-Cobra CLI framework and want to experiment:
+
+```bash
+# Force generation despite unsupported framework (experimental)
+cliguard generate --project-path . --entrypoint "github.com/org/project/cmd.NewApp" --force
+
+# Force validation despite unsupported framework (experimental)
+cliguard validate --project-path . --entrypoint "github.com/org/project/cmd.NewApp" --force
+```
+
+**Note**: Using `--force` with non-Cobra frameworks will likely produce errors or unreliable results. This flag is intended for experimentation and edge cases only.
 
 ### Basic Validation
 
@@ -335,6 +351,21 @@ Failure:
 ## Dogfooding
 
 Cliguard validates its own CLI structure. See our [`cliguard.yaml`](./cliguard.yaml) contract file.
+
+## Future CLI Framework Support
+
+We plan to expand cliguard's support to additional CLI frameworks. Our roadmap includes:
+
+- **urfave/cli** - A popular alternative to Cobra with a different API design
+- **Standard library flag** - For simpler CLIs using Go's built-in flag package
+- **Kingpin** - Another feature-rich CLI framework
+
+Each framework will require:
+- Contract schema adaptations for framework-specific features
+- Inspector implementations to extract CLI structure
+- Validation logic tailored to the framework's patterns
+
+If you're interested in contributing support for a specific framework, please check our GitHub issues or open a discussion.
 
 ## Development
 

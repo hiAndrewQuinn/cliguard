@@ -29,6 +29,7 @@ var (
 	contractPath string
 	entrypoint   string
 	interactive  bool
+	force        bool
 )
 
 func NewRootCmd() *cobra.Command {
@@ -51,6 +52,7 @@ and flags match the expected specification.`,
 	validateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (defaults to current directory)")
 	validateCmd.Flags().StringVar(&contractPath, "contract", "", "Path to the contract file (defaults to cliguard.yaml in project path)")
 	validateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
+	validateCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
 
 
 	rootCmd.AddCommand(validateCmd)
@@ -67,6 +69,7 @@ creating an initial contract from an existing CLI.`,
 
 	generateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (defaults to current directory)")
 	generateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
+	generateCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
 
 
 	rootCmd.AddCommand(generateCmd)
@@ -83,6 +86,7 @@ This helps you quickly identify where commands are defined in unfamiliar codebas
 
 	discoverCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (required)")
 	discoverCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive mode: prompt to select from multiple candidates")
+	discoverCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
 
 	discoverCmd.MarkFlagRequired("project-path")
 
@@ -93,7 +97,7 @@ This helps you quickly identify where commands are defined in unfamiliar codebas
 
 // ValidateRunner interface for dependency injection
 type ValidateRunner interface {
-	Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error
+	Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error
 }
 
 // DefaultValidateRunner is the default implementation
@@ -109,7 +113,18 @@ func NewDefaultValidateRunner() *DefaultValidateRunner {
 }
 
 // Run executes the validation
-func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error {
+	// Check if entrypoint is provided and detect framework
+	if entrypoint != "" {
+		framework, err := discovery.DetectEntrypointFramework(projectPath, entrypoint, nil)
+		if err == nil && framework != "" && framework != "cobra" {
+			if !force {
+				return fmt.Errorf("Error: cliguard currently only supports Cobra CLIs. Support for %s is coming soon!\nUse --force to proceed anyway (may produce unexpected results)", framework)
+			}
+			cmd.Printf("⚠️  Warning: Proceeding with unsupported framework %s. Results may be unreliable.\n\n", framework)
+		}
+	}
+	
 	opts := service.ValidateOptions{
 		ProjectPath:  projectPath,
 		ContractPath: contractPath,
@@ -158,12 +173,12 @@ func runValidate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 	}
-	return validateRunner.Run(cmd, path, contractPath, entrypoint)
+	return validateRunner.Run(cmd, path, contractPath, entrypoint, force)
 }
 
 // GenerateRunner interface for dependency injection
 type GenerateRunner interface {
-	Run(cmd *cobra.Command, projectPath, entrypoint string) error
+	Run(cmd *cobra.Command, projectPath, entrypoint string, force bool) error
 }
 
 // DefaultGenerateRunner is the default implementation
@@ -179,7 +194,18 @@ func NewDefaultGenerateRunner() *DefaultGenerateRunner {
 }
 
 // Run executes the generation
-func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string) error {
+func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string, force bool) error {
+	// Check if entrypoint is provided and detect framework
+	if entrypoint != "" {
+		framework, err := discovery.DetectEntrypointFramework(projectPath, entrypoint, nil)
+		if err == nil && framework != "" && framework != "cobra" {
+			if !force {
+				return fmt.Errorf("Error: cliguard currently only supports Cobra CLIs. Support for %s is coming soon!\nUse --force to proceed anyway (may produce unexpected results)", framework)
+			}
+			cmd.Printf("⚠️  Warning: Proceeding with unsupported framework %s. Results may be unreliable.\n\n", framework)
+		}
+	}
+	
 	opts := service.GenerateOptions{
 		ProjectPath: projectPath,
 		Entrypoint:  entrypoint,
@@ -209,12 +235,12 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 	}
-	return generateRunner.Run(cmd, path, entrypoint)
+	return generateRunner.Run(cmd, path, entrypoint, force)
 }
 
 // DiscoverRunner interface for dependency injection
 type DiscoverRunner interface {
-	Run(cmd *cobra.Command, projectPath string, interactive bool) error
+	Run(cmd *cobra.Command, projectPath string, interactive bool, force bool) error
 }
 
 // DefaultDiscoverRunner is the default implementation
@@ -226,7 +252,7 @@ func NewDefaultDiscoverRunner() *DefaultDiscoverRunner {
 }
 
 // Run executes the discovery
-func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string, interactive bool) error {
+func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string, interactive bool, force bool) error {
 	// Convert to absolute path if needed
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
@@ -255,7 +281,7 @@ func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string, inte
 		return nil
 	}
 	
-	discovery.PrintCandidates(cmd.OutOrStdout(), candidates)
+	discovery.PrintCandidates(cmd.OutOrStdout(), candidates, force)
 	return nil
 }
 
@@ -263,5 +289,5 @@ func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string, inte
 var discoverRunner DiscoverRunner = NewDefaultDiscoverRunner()
 
 func runDiscover(cmd *cobra.Command, args []string) error {
-	return discoverRunner.Run(cmd, projectPath, interactive)
+	return discoverRunner.Run(cmd, projectPath, interactive, force)
 }
