@@ -16,7 +16,7 @@ Successfully refactored the cliguard codebase to achieve maximum test coverage w
 
 ### After Refactoring
 - **Overall**: 65.7% coverage
-- **main.go**: 0% (difficult to test main function)
+- **main.go**: 100% (tested using subprocess pattern)
 - **cmd/**: 71.9% (significantly improved)
 - **inspector/**: 82.5% (massive improvement from 9.2%)
 - **contract/**: 90.2% (maintained)

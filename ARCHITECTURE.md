@@ -8,7 +8,7 @@ Cliguard is a contract-based validation tool for Cobra CLIs. It ensures that com
 
 ### 1. Main Entry Point (`main.go`)
 - Simple entry point that calls `cmd.Execute()`
-- Current coverage: 0%
+- Current coverage: 100% (tested using subprocess pattern)
 
 ### 2. Command Layer (`cmd/`)
 - **`root.go`**: Defines the root command and validate subcommand
@@ -77,7 +77,7 @@ Cliguard is a contract-based validation tool for Cobra CLIs. It ensures that com
 
 ## Current Test Coverage
 
-- **main.go**: 0% (entry point)
+- **main.go**: 100% (entry point, tested with subprocess pattern)
 - **cmd/**: 61.5% (missing Execute() and parts of runValidate())
 - **contract/**: 90.2% (well tested)
 - **inspector/**: 9.2% (core InspectProject function untested)
@@ -88,4 +88,4 @@ Cliguard is a contract-based validation tool for Cobra CLIs. It ensures that com
 1. **Inspector Testing**: The InspectProject function is complex and completely untested
 2. **Integration Testing**: Need end-to-end tests of the full workflow
 3. **Error Path Coverage**: Many error conditions in runValidate are untested
-4. **Main Function**: Entry point is untested
+4. **Main Function**: ✓ Now tested with 100% coverage
