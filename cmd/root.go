@@ -28,6 +28,7 @@ var (
 	projectPath  string
 	contractPath string
 	entrypoint   string
+	interactive  bool
 )
 
 func NewRootCmd() *cobra.Command {
@@ -81,6 +82,7 @@ This helps you quickly identify where commands are defined in unfamiliar codebas
 	}
 
 	discoverCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (required)")
+	discoverCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive mode: prompt to select from multiple candidates")
 
 	discoverCmd.MarkFlagRequired("project-path")
 
@@ -212,7 +214,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 
 // DiscoverRunner interface for dependency injection
 type DiscoverRunner interface {
-	Run(cmd *cobra.Command, projectPath string) error
+	Run(cmd *cobra.Command, projectPath string, interactive bool) error
 }
 
 // DefaultDiscoverRunner is the default implementation
@@ -224,7 +226,7 @@ func NewDefaultDiscoverRunner() *DefaultDiscoverRunner {
 }
 
 // Run executes the discovery
-func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string) error {
+func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string, interactive bool) error {
 	// Convert to absolute path if needed
 	absPath, err := filepath.Abs(projectPath)
 	if err != nil {
@@ -240,6 +242,19 @@ func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string) erro
 		return fmt.Errorf("failed to discover entrypoints: %w", err)
 	}
 	
+	// Handle interactive mode
+	if interactive && len(candidates) > 1 {
+		selector := discovery.NewInteractiveSelector(cmd.InOrStdin(), cmd.OutOrStdout())
+		selected, err := selector.SelectCandidate(candidates)
+		if err != nil {
+			return err
+		}
+		
+		fmt.Fprintf(cmd.OutOrStdout(), "\nSelected entrypoint:\n%s\n", 
+			discovery.FormatSelectedEntrypoint(selected))
+		return nil
+	}
+	
 	discovery.PrintCandidates(cmd.OutOrStdout(), candidates)
 	return nil
 }
@@ -248,5 +263,5 @@ func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string) erro
 var discoverRunner DiscoverRunner = NewDefaultDiscoverRunner()
 
 func runDiscover(cmd *cobra.Command, args []string) error {
-	return discoverRunner.Run(cmd, projectPath)
+	return discoverRunner.Run(cmd, projectPath, interactive)
 }
