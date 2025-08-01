@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
+	"github.com/hiAndrewQuinn/cliguard/internal/discovery"
 	"github.com/hiAndrewQuinn/cliguard/internal/service"
 	"github.com/spf13/cobra"
 )
@@ -67,6 +69,22 @@ creating an initial contract from an existing CLI.`,
 
 
 	rootCmd.AddCommand(generateCmd)
+
+	// Discover command
+	discoverCmd := &cobra.Command{
+		Use:   "discover",
+		Short: "Discover CLI entrypoints in a Go project",
+		Long: `Discover searches a Go project for potential CLI entrypoints by analyzing
+common patterns used by various CLI frameworks (Cobra, urfave/cli, flag, etc.).
+This helps you quickly identify where commands are defined in unfamiliar codebases.`,
+		RunE: runDiscover,
+	}
+
+	discoverCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (required)")
+
+	discoverCmd.MarkFlagRequired("project-path")
+
+	rootCmd.AddCommand(discoverCmd)
 
 	return rootCmd
 }
@@ -190,4 +208,45 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return generateRunner.Run(cmd, path, entrypoint)
+}
+
+// DiscoverRunner interface for dependency injection
+type DiscoverRunner interface {
+	Run(cmd *cobra.Command, projectPath string) error
+}
+
+// DefaultDiscoverRunner is the default implementation
+type DefaultDiscoverRunner struct{}
+
+// NewDefaultDiscoverRunner creates a new default runner
+func NewDefaultDiscoverRunner() *DefaultDiscoverRunner {
+	return &DefaultDiscoverRunner{}
+}
+
+// Run executes the discovery
+func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string) error {
+	// Convert to absolute path if needed
+	absPath, err := filepath.Abs(projectPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve project path: %w", err)
+	}
+	
+	discoverer := discovery.NewDiscoverer(absPath, nil)
+	
+	fmt.Fprintf(cmd.OutOrStdout(), "Searching for CLI entrypoints in: %s\n\n", projectPath)
+	
+	candidates, err := discoverer.DiscoverEntrypoints()
+	if err != nil {
+		return fmt.Errorf("failed to discover entrypoints: %w", err)
+	}
+	
+	discovery.PrintCandidates(cmd.OutOrStdout(), candidates)
+	return nil
+}
+
+// Global runner for testing
+var discoverRunner DiscoverRunner = NewDefaultDiscoverRunner()
+
+func runDiscover(cmd *cobra.Command, args []string) error {
+	return discoverRunner.Run(cmd, projectPath)
 }
