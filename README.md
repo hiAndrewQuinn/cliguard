@@ -13,6 +13,7 @@ Cliguard validates Go CLIs built with [Cobra](https://github.com/spf13/cobra) ag
 - **Comprehensive checking**: Validates commands, subcommands, flags, types, and descriptions
 - **CI/CD friendly**: Exit codes and clear output make it perfect for automated pipelines
 - **Dogfooding**: Cliguard validates its own CLI structure
+- **Convenient defaults**: No need to specify `--project-path` when running from your project directory
 
 ## Installation
 
@@ -59,7 +60,7 @@ commands:
     short: Validate a Cobra CLI against a contract file
     flags:
       - name: project-path
-        usage: Path to the root of the target Go project (required)
+        usage: Path to the root of the target Go project (defaults to current directory)
         type: string
       - name: contract
         usage: Path to the contract file (defaults to cliguard.yaml in project path)
@@ -72,7 +73,8 @@ commands:
 3. Run Cliguard on itself:
 
 ```bash
-./cliguard validate --project-path . --entrypoint "github.com/hiAndrewQuinn/cliguard/cmd.NewRootCmd"
+# From the cliguard directory, project-path defaults to current directory
+./cliguard validate --entrypoint "github.com/hiAndrewQuinn/cliguard/cmd.NewRootCmd"
 ```
 
 Output:
@@ -88,7 +90,8 @@ Validating CLI structure against contract...
 1. Generate a contract file from your existing CLI:
 
 ```bash
-cliguard generate --project-path . --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
+# From your project directory
+cliguard generate --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
 ```
 
 This creates a `cliguard.yaml` file like:
@@ -119,7 +122,8 @@ commands:
 2. Run validation to ensure your CLI structure remains consistent:
 
 ```bash
-cliguard validate --project-path . --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
+# From your project directory
+cliguard validate --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
 ```
 
 ## Contract Schema
@@ -174,24 +178,37 @@ Supported flag types:
 Generate a contract file from an existing Cobra CLI:
 
 ```bash
+# From your project directory (no --project-path needed)
+cliguard generate
+
+# Or specify a different project
 cliguard generate --project-path /path/to/project
 ```
 
-With a custom output location:
+The generated contract is printed to stdout, so pipe it to a file:
 
 ```bash
-cliguard generate --project-path /path/to/project --output my-contract.yaml
+# From your project directory
+cliguard generate > cliguard.yaml
+
+# Or with a specific project path
+cliguard generate --project-path /path/to/project > my-contract.yaml
 ```
 
 For projects where the root command is returned by a function:
 
 ```bash
-cliguard generate --project-path . --entrypoint "github.com/org/project/cmd.NewRootCmd"
+# From your project directory
+cliguard generate --entrypoint "github.com/org/project/cmd.NewRootCmd" > cliguard.yaml
 ```
 
 ### Basic Validation
 
 ```bash
+# From your project directory (no --project-path needed)
+cliguard validate
+
+# Or validate a different project
 cliguard validate --project-path /path/to/project
 ```
 
@@ -206,7 +223,8 @@ cliguard validate --project-path /path/to/project --contract /path/to/contract.y
 For projects where the root command is returned by a function:
 
 ```bash
-cliguard validate --project-path . --entrypoint "github.com/org/project/cmd.NewRootCmd"
+# From your project directory
+cliguard validate --entrypoint "github.com/org/project/cmd.NewRootCmd"
 ```
 
 ## How It Works
@@ -226,7 +244,7 @@ Add Cliguard to your CI pipeline to catch breaking changes:
 - name: Validate CLI Contract
   run: |
     go install github.com/hiAndrewQuinn/cliguard@latest
-    cliguard validate --project-path . --entrypoint "github.com/org/repo/cmd.NewRootCmd"
+    cliguard validate --entrypoint "github.com/org/repo/cmd.NewRootCmd"
 ```
 
 ## Example Output

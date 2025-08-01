@@ -67,6 +67,7 @@ Or run individual tests:
 ```bash
 cd basic/simple-cli
 go build
-cliguard generate --project-path . --entrypoint "github.com/cliguard/test/simple.NewRootCmd" > contract.yaml
-cliguard validate --project-path . --entrypoint "github.com/cliguard/test/simple.NewRootCmd" --contract contract.yaml
+# project-path defaults to current directory
+cliguard generate --entrypoint "github.com/cliguard/test/simple.NewRootCmd" > contract.yaml
+cliguard validate --entrypoint "github.com/cliguard/test/simple.NewRootCmd" --contract contract.yaml
 ```
