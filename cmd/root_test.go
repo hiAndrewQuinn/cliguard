@@ -36,9 +36,9 @@ func TestNewRootCmd(t *testing.T) {
 		t.Error("project-path flag not found")
 	}
 
-	// Check that project-path is required
-	if projectPathFlag.Annotations == nil || projectPathFlag.Annotations[cobra.BashCompOneRequiredFlag][0] != "true" {
-		t.Error("project-path flag should be required")
+	// Check that project-path is NOT required (it's now optional)
+	if projectPathFlag.Annotations != nil && projectPathFlag.Annotations[cobra.BashCompOneRequiredFlag] != nil && projectPathFlag.Annotations[cobra.BashCompOneRequiredFlag][0] == "true" {
+		t.Error("project-path flag should not be required")
 	}
 
 	// Check optional flags
@@ -165,4 +165,52 @@ func TestIntegration_ValidateCommand(t *testing.T) {
 	if !contains(output, "Validation passed") && !contains(output, "Validation failed") {
 		t.Errorf("Expected validation result in output, got stdout: %q, stderr: %q", outBuf.String(), errBuf.String())
 	}
+}
+
+func TestValidateCommand_DefaultProjectPath(t *testing.T) {
+	// Test that validate command uses current directory when project-path is not provided
+	
+	// Save original runner and restore after test
+	originalRunner := validateRunner
+	defer func() { validateRunner = originalRunner }()
+	
+	// Mock runner to capture the project path
+	var capturedPath string
+	mockRunner := &mockValidateRunner{
+		runFunc: func(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+			capturedPath = projectPath
+			return nil
+		},
+	}
+	validateRunner = mockRunner
+	
+	cmd := NewRootCmd()
+	cmd.SetArgs([]string{"validate"})
+	
+	err := cmd.Execute()
+	if err != nil {
+		t.Errorf("Execute() error = %v", err)
+	}
+	
+	// Get expected current directory
+	expectedPath, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current directory: %v", err)
+	}
+	
+	if capturedPath != expectedPath {
+		t.Errorf("projectPath = %q, want %q (current directory)", capturedPath, expectedPath)
+	}
+}
+
+// mockValidateRunner for testing
+type mockValidateRunner struct {
+	runFunc func(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error
+}
+
+func (m *mockValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+	if m.runFunc != nil {
+		return m.runFunc(cmd, projectPath, contractPath, entrypoint)
+	}
+	return nil
 }

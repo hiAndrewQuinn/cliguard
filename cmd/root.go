@@ -45,11 +45,10 @@ and flags match the expected specification.`,
 		RunE: runValidate,
 	}
 
-	validateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (required)")
+	validateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (defaults to current directory)")
 	validateCmd.Flags().StringVar(&contractPath, "contract", "", "Path to the contract file (defaults to cliguard.yaml in project path)")
 	validateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
 
-	validateCmd.MarkFlagRequired("project-path")
 
 	rootCmd.AddCommand(validateCmd)
 
@@ -63,10 +62,9 @@ creating an initial contract from an existing CLI.`,
 		RunE: runGenerate,
 	}
 
-	generateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (required)")
+	generateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (defaults to current directory)")
 	generateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
 
-	generateCmd.MarkFlagRequired("project-path")
 
 	rootCmd.AddCommand(generateCmd)
 
@@ -131,7 +129,16 @@ func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPat
 var validateRunner ValidateRunner = NewDefaultValidateRunner()
 
 func runValidate(cmd *cobra.Command, args []string) error {
-	return validateRunner.Run(cmd, projectPath, contractPath, entrypoint)
+	// Default to current directory if no project path specified
+	path := projectPath
+	if path == "" {
+		var err error
+		path, err = os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+	}
+	return validateRunner.Run(cmd, path, contractPath, entrypoint)
 }
 
 // GenerateRunner interface for dependency injection
@@ -173,5 +180,14 @@ func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint 
 var generateRunner GenerateRunner = NewDefaultGenerateRunner()
 
 func runGenerate(cmd *cobra.Command, args []string) error {
-	return generateRunner.Run(cmd, projectPath, entrypoint)
+	// Default to current directory if no project path specified
+	path := projectPath
+	if path == "" {
+		var err error
+		path, err = os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+	}
+	return generateRunner.Run(cmd, path, entrypoint)
 }
