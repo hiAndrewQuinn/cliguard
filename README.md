@@ -8,6 +8,7 @@ Cliguard validates Go CLIs built with [Cobra](https://github.com/spf13/cobra) ag
 
 ## Features
 
+- **Entrypoint discovery**: Automatically find CLI entrypoints in Go projects across multiple frameworks
 - **Contract generation**: Automatically generate contract files from existing Cobra CLIs
 - **Contract-based validation**: Define your expected CLI structure in a simple YAML file
 - **Comprehensive checking**: Validates commands, subcommands, flags, types, and descriptions
@@ -172,6 +173,50 @@ Supported flag types:
 - `stringSlice`
 
 ## Usage
+
+### Discover Entrypoints
+
+Find CLI entrypoints in a Go project by analyzing common CLI framework patterns. Supports:
+- Cobra (`github.com/spf13/cobra`)
+- urfave/cli (`github.com/urfave/cli`)
+- Standard library flag package
+- Kingpin (`github.com/alecthomas/kingpin`)
+
+```bash
+cliguard discover --project-path /path/to/project
+```
+
+Use interactive mode to select from multiple candidates:
+
+```bash
+cliguard discover --project-path /path/to/project --interactive
+# or
+cliguard discover --project-path /path/to/project -i
+```
+
+Example output:
+```
+Searching for CLI entrypoints in: .
+
+Found 3 potential CLI entrypoint(s):
+
+1. cobra (confidence: 95%)
+   File: cmd/root.go:15
+   Pattern: Function returning root cobra.Command
+   Code: func NewRootCmd() *cobra.Command {
+   Function: func NewRootCmd() *cobra.Command
+   Package: github.com/myorg/myproject/cmd
+
+2. cobra (confidence: 85%)
+   File: cmd/root.go:20
+   Pattern: Cobra Execute function
+   Code: func Execute() {
+   Function: func Execute()
+   Package: github.com/myorg/myproject/cmd
+
+Suggested entrypoint:
+  --entrypoint github.com/myorg/myproject/cmd.NewRootCmd
+```
 
 ### Generate a Contract
 
