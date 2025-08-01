@@ -254,6 +254,30 @@ Failure:
 
 Cliguard validates its own CLI structure. See our [`cliguard.yaml`](./cliguard.yaml) contract file.
 
+## Development
+
+### Running Tests
+
+Cliguard includes a comprehensive test suite. Use the Makefile for common operations:
+
+```bash
+# Run all tests
+make test
+
+# Run only integration tests
+make test-integration
+
+# Set up test fixtures
+make test-fixtures
+
+# Clean and regenerate test fixtures
+make clean-fixtures
+```
+
+### Test Fixtures
+
+The project includes test fixtures in `test/fixtures/` for integration testing. These fixtures are automatically maintained by the test helper functions.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

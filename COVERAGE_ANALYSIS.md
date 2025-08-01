@@ -2,12 +2,13 @@
 
 ## Current Coverage Summary
 
-- **Overall**: ~60% coverage
+- **Overall**: 64.5% coverage
 - **main.go**: 0%
-- **cmd/**: 61.5%
+- **cmd/**: 69.2%
 - **contract/**: 90.2%
-- **inspector/**: 9.2%
+- **inspector/**: 78.8%
 - **validator/**: 93.3%
+- **service/**: 27.5%
 
 ## Detailed Coverage Gaps
 
@@ -15,7 +16,7 @@
 - `main()` function is completely untested
 - This is typical for Go projects but can be improved
 
-### 2. cmd/root.go (61.5% coverage)
+### 2. cmd/root.go (69.2% coverage)
 
 **Uncovered Functions:**
 - `Execute()` (0%): Never called in tests
@@ -31,7 +32,7 @@
 - Lines 86-91: Inspector execution
 - Lines 94-109: Validation and reporting
 
-### 3. internal/inspector/inspector.go (9.2% coverage)
+### 3. internal/inspector/inspector.go (78.8% coverage)
 
 **Critical Gap**: `InspectProject()` function (0% coverage)
 This is the most complex untested function:
@@ -50,12 +51,13 @@ This is the most complex untested function:
 - Requires valid Go project structure
 - Complex string manipulation
 
-### 4. Test Infrastructure Issues
+### 4. Test Infrastructure Status
 
-**Integration Test Skipped:**
-```
-TestIntegration_ValidateCommand: Skipping integration test - fixture needs go mod tidy
-```
+**Integration Tests Fixed:**
+- `TestIntegration_ValidateCommand` now runs successfully
+- Test fixtures properly maintained with `go mod tidy`
+- Added `setupTestFixtures()` helper for automatic fixture preparation
+- New Makefile targets for test management
 
 ## Root Causes of Low Coverage
 
@@ -67,10 +69,9 @@ TestIntegration_ValidateCommand: Skipping integration test - fixture needs go mo
 
 ## Priority Areas for Improvement
 
-1. **Inspector Module** (Highest Priority)
-   - 0% coverage on core functionality
-   - Most complex untested code
-   - Critical to application functionality
+1. **Service Module** (27.5% coverage)
+   - Core business logic with low coverage
+   - Validate and Generate services untested
 
 2. **cmd/root.go Success Paths**
    - Missing happy path testing
@@ -79,6 +80,6 @@ TestIntegration_ValidateCommand: Skipping integration test - fixture needs go mo
 3. **main.go**
    - Simple to test but currently ignored
 
-4. **Integration Tests**
-   - Fix test fixtures
-   - Add end-to-end scenarios
+4. **Additional Integration Tests**
+   - Add more end-to-end scenarios
+   - Test error conditions and edge cases

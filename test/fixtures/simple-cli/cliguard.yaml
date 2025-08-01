@@ -1,22 +1,24 @@
+# Cliguard contract file
+# To use this contract, pipe this output to a file:
+#   cliguard generate --project-path . > cliguard.yaml
+#
 use: simple-cli
 short: A simple test CLI
 long: This is a simple CLI for testing cliguard
-
 flags:
-  - name: config
-    shorthand: c
-    usage: config file path
-    type: string
-    persistent: true
-
+    - name: config
+      shorthand: c
+      usage: config file path
+      type: string
+      persistent: true
 commands:
-  - use: server
-    short: Server management commands
-    flags:
-      - name: port
-        shorthand: p
-        usage: server port
-        type: int
-    commands:
-      - use: start
-        short: Start the server
+    - use: server
+      short: Server management commands
+      flags:
+        - name: port
+          shorthand: p
+          usage: server port
+          type: int
+      commands:
+        - use: start
+          short: Start the server

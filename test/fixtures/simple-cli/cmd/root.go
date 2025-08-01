@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +29,13 @@ func NewRootCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start the server",
 		Run: func(cmd *cobra.Command, args []string) {
-			// Implementation here
+			// Get port from parent command
+			parentPort, _ := cmd.Parent().Flags().GetInt("port")
+			fmt.Printf("Starting server on port %d\n", parentPort)
+			if configFile != "" {
+				fmt.Printf("Using config file: %s\n", configFile)
+			}
+			fmt.Println("Server configuration complete. (In a real implementation, the server would start here)")
 		},
 	}
 
