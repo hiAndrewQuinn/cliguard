@@ -173,7 +173,7 @@ func TestValidateCommand_DefaultProjectPath(t *testing.T) {
 	// Mock runner to capture the project path
 	var capturedPath string
 	mockRunner := &mockValidateRunner{
-		runFunc: func(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+		runFunc: func(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error {
 			capturedPath = projectPath
 			return nil
 		},
@@ -201,12 +201,12 @@ func TestValidateCommand_DefaultProjectPath(t *testing.T) {
 
 // mockValidateRunner for testing
 type mockValidateRunner struct {
-	runFunc func(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error
+	runFunc func(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error
 }
 
-func (m *mockValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+func (m *mockValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error {
 	if m.runFunc != nil {
-		return m.runFunc(cmd, projectPath, contractPath, entrypoint)
+		return m.runFunc(cmd, projectPath, contractPath, entrypoint, force)
 	}
 	return nil
 }
