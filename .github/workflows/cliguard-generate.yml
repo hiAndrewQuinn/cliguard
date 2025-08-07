@@ -1,0 +1,47 @@
+name: Update CLI Contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cmd/**'
+      - 'internal/cmd/**'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          
+      - name: Install cliguard
+        run: go install github.com/hiAndrewQuinn/cliguard@latest
+        
+      - name: Generate contract
+        run: |
+          cliguard generate \
+            --project-path . \
+            --entrypoint "github.com/${{ github.repository }}/cmd.NewRootCmd" \
+            > cliguard.yaml.new
+            
+      - name: Check for changes
+        id: diff
+        run: |
+          if ! diff -q cliguard.yaml cliguard.yaml.new; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: 'Update CLI contract'
+          body: 'This PR updates the CLI contract to match the current implementation.'
+          commit-message: 'chore: update CLI contract'
+          branch: update-cli-contract

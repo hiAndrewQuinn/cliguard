@@ -1,0 +1,26 @@
+pipeline {
+    agent {
+        docker {
+            image 'golang:1.21'
+        }
+    }
+    
+    stages {
+        stage('Validate CLI') {
+            steps {
+                sh 'go install github.com/hiAndrewQuinn/cliguard@latest'
+                sh 'cliguard validate --project-path . --entrypoint "github.com/org/repo/cmd.NewRootCmd"'
+            }
+        }
+    }
+    
+    post {
+        failure {
+            emailext (
+                subject: "CLI Contract Validation Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+                body: "The CLI contract validation failed. This indicates breaking changes to the CLI structure.",
+                to: "${env.CHANGE_AUTHOR_EMAIL}"
+            )
+        }
+    }
+}

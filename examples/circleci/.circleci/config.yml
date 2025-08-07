@@ -1,0 +1,23 @@
+version: 2.1
+
+jobs:
+  validate-cli:
+    docker:
+      - image: cimg/go:1.21
+    steps:
+      - checkout
+      - run:
+          name: Install cliguard
+          command: go install github.com/hiAndrewQuinn/cliguard@latest
+      - run:
+          name: Validate CLI contract
+          command: |
+            cliguard validate \
+              --project-path . \
+              --entrypoint "github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/cmd.NewRootCmd"
+
+workflows:
+  version: 2
+  validate:
+    jobs:
+      - validate-cli

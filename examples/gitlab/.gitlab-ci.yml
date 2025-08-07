@@ -1,0 +1,16 @@
+stages:
+  - validate
+
+validate-cli:
+  stage: validate
+  image: golang:1.21
+  before_script:
+    - go install github.com/hiAndrewQuinn/cliguard@latest
+  script:
+    - cliguard validate --project-path . --entrypoint "gitlab.com/$CI_PROJECT_PATH/cmd.NewRootCmd"
+  only:
+    changes:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+      - cliguard.yaml
