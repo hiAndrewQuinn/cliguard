@@ -263,6 +263,36 @@ See [`examples/`](examples/) directory for complete CI/CD integration examples:
 
 **Validation fails unexpectedly** - Check if your CLI uses dynamic command registration or framework features not captured in contracts.
 
+## Development
+
+### Test Projects
+
+Cliguard includes a collection of real-world CLI projects for testing against popular Go applications. These projects can consume significant disk space and context windows, so they're gitignored and can be regenerated as needed.
+
+#### Regenerating Test Projects
+
+```bash
+./regenerate-test-projects.sh
+```
+
+This script clones the following projects for testing:
+- **GitHub CLI** - `github.com/cli/cli`
+- **Helm** - `github.com/helm/helm`  
+- **Hugo** - `github.com/gohugoio/hugo`
+- **CockroachDB** - `github.com/cockroachdb/cockroach`
+- **etcd** - `github.com/etcd-io/etcd`
+- **Kubernetes** - `github.com/kubernetes/kubernetes`
+- **Demo CLI** - Simple test project with standard Cobra setup
+
+The script will remove any existing `test-projects/` directory and recreate it from scratch. Use `./regenerate-test-projects.sh --help` for more details.
+
+#### When to Regenerate
+
+- When context windows become too large due to the test projects
+- After removing the test-projects directory to save disk space  
+- When setting up a new development environment
+- When you need fresh copies of the upstream projects
+
 ## Contributing
 
 We welcome contributions! Areas where help is especially needed:
