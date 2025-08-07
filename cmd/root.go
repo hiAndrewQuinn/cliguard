@@ -54,7 +54,6 @@ and flags match the expected specification.`,
 	validateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
 	validateCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
 
-
 	rootCmd.AddCommand(validateCmd)
 
 	// Generate command
@@ -70,7 +69,6 @@ creating an initial contract from an existing CLI.`,
 	generateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (defaults to current directory)")
 	generateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
 	generateCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
-
 
 	rootCmd.AddCommand(generateCmd)
 
@@ -88,7 +86,7 @@ This helps you quickly identify where commands are defined in unfamiliar codebas
 	discoverCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive mode: prompt to select from multiple candidates")
 	discoverCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
 
-	discoverCmd.MarkFlagRequired("project-path")
+	_ = discoverCmd.MarkFlagRequired("project-path")
 
 	rootCmd.AddCommand(discoverCmd)
 

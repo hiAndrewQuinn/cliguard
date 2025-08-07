@@ -289,10 +289,13 @@ func (d *Discoverer) extractFunctionSignature(content string, lineNumber int) st
 		return ""
 	}
 
+	// Compile regex once
+	funcStartRegex := regexp.MustCompile(`^func\s+`)
+	
 	// Look backwards for function declaration
 	for i := lineNumber - 1; i >= 0 && i >= lineNumber-10; i-- {
 		line := lines[i]
-		if matched, _ := regexp.MatchString(`^func\s+`, strings.TrimSpace(line)); matched {
+		if funcStartRegex.MatchString(strings.TrimSpace(line)) {
 			// Extract function signature
 			funcRegex := regexp.MustCompile(`func\s+(\w+)?\s*\([^)]*\)\s*([^{]*)`)
 			if matches := funcRegex.FindStringSubmatch(line); len(matches) > 0 {
