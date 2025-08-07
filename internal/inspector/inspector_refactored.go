@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/hiAndrewQuinn/cliguard/internal/errors"
 	"github.com/hiAndrewQuinn/cliguard/internal/executor"
 	"github.com/hiAndrewQuinn/cliguard/internal/filesystem"
 )
@@ -53,14 +54,19 @@ func (i *Inspector) Inspect() (*InspectedCLI, error) {
 	// Create a temporary directory for the inspector
 	tempDir, err := i.config.FileSystem.MkdirTemp("", "cliguard-inspector-*")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temp directory: %w", err)
+		return nil, errors.TempDirError{
+			Operation: "create",
+			Err:       err,
+		}
 	}
-	defer i.config.FileSystem.RemoveAll(tempDir)
+	defer func() {
+		_ = i.config.FileSystem.RemoveAll(tempDir)
+	}()
 
 	// Parse the entrypoint
 	entrypointInfo, err := i.parseEntrypoint(i.config.Entrypoint)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse entrypoint: %w", err)
+		return nil, err // parseEntrypoint already returns proper error
 	}
 
 	// Setup the temporary module
@@ -82,7 +88,7 @@ func (i *Inspector) Inspect() (*InspectedCLI, error) {
 
 	// Get dependencies
 	if err := i.getDependencies(tempDir); err != nil {
-		return nil, fmt.Errorf("failed to get dependencies: %w", err)
+		return nil, err // getDependencies already returns proper error
 	}
 
 	// Run the inspector
@@ -92,7 +98,11 @@ func (i *Inspector) Inspect() (*InspectedCLI, error) {
 	}
 
 	// Parse the output
-	return i.parseInspectorOutput(output)
+	inspectedCLI, err := i.parseInspectorOutput(output)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse inspector output: %w", err)
+	}
+	return inspectedCLI, nil
 }
 
 // parseEntrypoint parses the entrypoint string into its components
@@ -105,7 +115,10 @@ func (i *Inspector) parseEntrypoint(entrypoint string) (*EntrypointInfo, error) 
 
 	parts := strings.Split(entrypoint, ".")
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid entrypoint format, expected: package.Function")
+		return nil, errors.EntrypointParseError{
+			Entrypoint: entrypoint,
+			Reason:     "invalid format",
+		}
 	}
 
 	// Check if it's just package.Function (e.g., main.NewRootCmd)
@@ -230,7 +243,11 @@ func (i *Inspector) getDependencies(tempDir string) error {
 	getCmd := i.config.Executor.Command("go", "get", "./...")
 	getCmd.SetDir(tempDir)
 	if output, err := getCmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("go get failed: %w\nOutput: %s", err, output)
+		return errors.DependencyError{
+			Operation: "go get ./...",
+			Output:    string(output),
+			Err:       err,
+		}
 	}
 	return nil
 }
@@ -250,7 +267,7 @@ func (i *Inspector) runInspector(tempDir string) ([]byte, error) {
 func (i *Inspector) parseInspectorOutput(output []byte) (*InspectedCLI, error) {
 	var cli InspectedCLI
 	if err := json.Unmarshal(output, &cli); err != nil {
-		return nil, fmt.Errorf("failed to parse inspector output: %w\nOutput: %s", err, output)
+		return nil, fmt.Errorf("invalid JSON output: %w\n\nRaw output:\n%s", err, output)
 	}
 	return &cli, nil
 }

@@ -234,8 +234,8 @@ func TestDefaultValidateRunner(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for nonexistent project")
 		}
-		if !contains(err.Error(), "project path does not exist") {
-			t.Errorf("Error = %q, want to contain 'project path does not exist'", err.Error())
+		if !contains(err.Error(), "Project path does not exist") {
+			t.Errorf("Error = %q, want to contain 'Project path does not exist'", err.Error())
 		}
 	})
 
@@ -271,8 +271,8 @@ func TestValidateServiceIntegration(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for nonexistent project")
 		}
-		if !contains(err.Error(), "project path does not exist") {
-			t.Errorf("Error = %q, want to contain 'project path does not exist'", err.Error())
+		if !contains(err.Error(), "Project path does not exist") {
+			t.Errorf("Error = %q, want to contain 'Project path does not exist'", err.Error())
 		}
 	})
 
@@ -298,8 +298,8 @@ short: Test CLI
 			t.Error("Expected error for invalid project")
 		}
 		// The error will be from the inspector trying to run go commands
-		if !contains(err.Error(), "failed to inspect project") {
-			t.Errorf("Error = %q, want to contain 'failed to inspect project'", err.Error())
+		if !contains(err.Error(), "Failed to inspect project") {
+			t.Errorf("Error = %q, want to contain 'Failed to inspect project'", err.Error())
 		}
 	})
 }
