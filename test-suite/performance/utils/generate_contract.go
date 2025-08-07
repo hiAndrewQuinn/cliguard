@@ -14,35 +14,40 @@ func GenerateContract(dir string, size CLISize) error {
 	numCommands := getCommandCount(size)
 
 	c := &contract.Contract{
-		Name:        "test-cli",
-		Version:     "1.0.0",
-		Description: fmt.Sprintf("Test CLI with %d commands for performance testing", numCommands),
-		Commands:    make([]contract.Command, 0, numCommands),
-		GlobalFlags: []contract.Flag{
+		Use:   "test-cli",
+		Short: fmt.Sprintf("Test CLI with %d commands for performance testing", numCommands),
+		Long:  "A comprehensive test CLI designed for performance testing and validation.",
+		Commands: make([]contract.Command, 0, numCommands),
+		Flags: []contract.Flag{
 			{
-				Name:        "config",
-				Type:        "string",
-				Description: "config file (default is $HOME/.test-cli.yaml)",
+				Name:  "config",
+				Type:  "string",
+				Usage: "config file (default is $HOME/.test-cli.yaml)",
+				Persistent: true,
 			},
 			{
-				Name:        "verbose",
-				Type:        "bool",
-				Description: "verbose output",
+				Name:  "verbose",
+				Type:  "bool",
+				Usage: "verbose output",
+				Persistent: true,
 			},
 			{
-				Name:        "debug",
-				Type:        "bool",
-				Description: "enable debug mode",
+				Name:  "debug",
+				Type:  "bool",
+				Usage: "enable debug mode",
+				Persistent: true,
 			},
 			{
-				Name:        "log-level",
-				Type:        "string",
-				Description: "log level (debug, info, warn, error)",
+				Name:  "log-level",
+				Type:  "string",
+				Usage: "log level (debug, info, warn, error)",
+				Persistent: true,
 			},
 			{
-				Name:        "output",
-				Type:        "string",
-				Description: "output format (json, yaml, text)",
+				Name:  "output",
+				Type:  "string",
+				Usage: "output format (json, yaml, text)",
+				Persistent: true,
 			},
 		},
 	}
@@ -55,22 +60,22 @@ func GenerateContract(dir string, size CLISize) error {
 		if i%10 == 0 && i > 0 {
 			for j := 0; j < 5; j++ {
 				subcmd := contract.Command{
-					Name:        fmt.Sprintf("sub-%d", j),
-					Description: fmt.Sprintf("Subcommand %d of command %d", j, i),
+					Use:   fmt.Sprintf("sub-%d", j),
+					Short: fmt.Sprintf("Subcommand %d of command %d", j, i),
 					Flags: []contract.Flag{
 						{
-							Name:        "sub-option",
-							Type:        "string",
-							Description: "Subcommand option",
+							Name:  "sub-option",
+							Type:  "string",
+							Usage: "Subcommand option",
 						},
 						{
-							Name:        "sub-flag",
-							Type:        "bool",
-							Description: "Subcommand flag",
+							Name:  "sub-flag",
+							Type:  "bool",
+							Usage: "Subcommand flag",
 						},
 					},
 				}
-				cmd.Subcommands = append(cmd.Subcommands, subcmd)
+				cmd.Commands = append(cmd.Commands, subcmd)
 			}
 		}
 
@@ -98,29 +103,28 @@ func generateContractCommand(index int, addMoreFlags bool) contract.Command {
 	}
 
 	cmd := contract.Command{
-		Name:        fmt.Sprintf("command-%03d", index),
-		Description: fmt.Sprintf("Command %d for performance testing", index),
-		Flags:       make([]contract.Flag, 0, flagCount),
+		Use:   fmt.Sprintf("command-%03d", index),
+		Short: fmt.Sprintf("Command %d for performance testing", index),
+		Flags: make([]contract.Flag, 0, flagCount),
 	}
 
 	// Add standard flags
 	cmd.Flags = append(cmd.Flags, contract.Flag{
-		Name:        "input",
-		Type:        "string",
-		Description: "Input file path",
-		Required:    true,
+		Name:  "input",
+		Type:  "string",
+		Usage: "Input file path",
 	})
 
 	cmd.Flags = append(cmd.Flags, contract.Flag{
-		Name:        "output",
-		Type:        "string",
-		Description: "Output file path",
+		Name:  "output",
+		Type:  "string",
+		Usage: "Output file path",
 	})
 
 	cmd.Flags = append(cmd.Flags, contract.Flag{
-		Name:        "force",
-		Type:        "bool",
-		Description: "Force operation without confirmation",
+		Name:  "force",
+		Type:  "bool",
+		Usage: "Force operation without confirmation",
 	})
 
 	// Add additional flags
@@ -137,40 +141,9 @@ func generateContractFlag(index int) contract.Flag {
 	flagType := flagTypes[index%len(flagTypes)]
 
 	flag := contract.Flag{
-		Name:        fmt.Sprintf("flag-%d", index),
-		Type:        flagType,
-		Description: fmt.Sprintf("%s flag %d", flagType, index),
-	}
-
-	// Add validation for some flags
-	if index%7 == 0 && flagType == "int" {
-		min := 0
-		max := 100
-		flag.Validation = &contract.Validation{
-			Min:     &min,
-			Max:     &max,
-			Message: "Value must be between 0 and 100",
-		}
-	} else if index%5 == 0 && flagType == "string" {
-		flag.Validation = &contract.Validation{
-			Pattern: "^[a-zA-Z0-9-]+$",
-			Message: "Must contain only alphanumeric characters and hyphens",
-		}
-	}
-
-	// Add default values for some flags
-	if index%3 == 0 {
-		switch flagType {
-		case "string":
-			defaultVal := fmt.Sprintf("default-%d", index)
-			flag.Default = &defaultVal
-		case "int":
-			defaultVal := index * 10
-			flag.Default = &defaultVal
-		case "bool":
-			defaultVal := false
-			flag.Default = &defaultVal
-		}
+		Name:  fmt.Sprintf("flag-%d", index),
+		Type:  flagType,
+		Usage: fmt.Sprintf("%s flag %d", flagType, index),
 	}
 
 	return flag
@@ -207,64 +180,64 @@ func GenerateRealWorldContract(dir string, cliType string) error {
 
 func generateKubectlLikeContract() *contract.Contract {
 	return &contract.Contract{
-		Name:        "kubectl-like",
-		Version:     "1.0.0",
-		Description: "A kubectl-like CLI for performance testing",
-		GlobalFlags: []contract.Flag{
-			{Name: "kubeconfig", Type: "string", Description: "Path to kubeconfig file"},
-			{Name: "context", Type: "string", Description: "Kubernetes context"},
-			{Name: "namespace", Type: "string", Description: "Kubernetes namespace"},
-			{Name: "output", Type: "string", Description: "Output format"},
+		Use:   "kubectl-like",
+		Short: "A kubectl-like CLI for performance testing",
+		Long:  "A comprehensive kubectl-like CLI tool designed for performance testing and validation.",
+		Flags: []contract.Flag{
+			{Name: "kubeconfig", Type: "string", Usage: "Path to kubeconfig file", Persistent: true},
+			{Name: "context", Type: "string", Usage: "Kubernetes context", Persistent: true},
+			{Name: "namespace", Type: "string", Usage: "Kubernetes namespace", Persistent: true},
+			{Name: "output", Type: "string", Usage: "Output format", Persistent: true},
 		},
 		Commands: []contract.Command{
 			{
-				Name:        "get",
-				Description: "Display resources",
+				Use:   "get",
+				Short: "Display resources",
 				Flags: []contract.Flag{
-					{Name: "all-namespaces", Type: "bool", Description: "List across all namespaces"},
-					{Name: "selector", Type: "string", Description: "Label selector"},
-					{Name: "watch", Type: "bool", Description: "Watch for changes"},
+					{Name: "all-namespaces", Type: "bool", Usage: "List across all namespaces"},
+					{Name: "selector", Type: "string", Usage: "Label selector"},
+					{Name: "watch", Type: "bool", Usage: "Watch for changes"},
 				},
-				Subcommands: []contract.Command{
-					{Name: "pods", Description: "Get pods"},
-					{Name: "services", Description: "Get services"},
-					{Name: "deployments", Description: "Get deployments"},
-					{Name: "configmaps", Description: "Get configmaps"},
-					{Name: "secrets", Description: "Get secrets"},
-				},
-			},
-			{
-				Name:        "apply",
-				Description: "Apply configuration",
-				Flags: []contract.Flag{
-					{Name: "filename", Type: "string", Description: "File to apply", Required: true},
-					{Name: "recursive", Type: "bool", Description: "Process directory recursively"},
-					{Name: "dry-run", Type: "string", Description: "Dry run mode"},
+				Commands: []contract.Command{
+					{Use: "pods", Short: "Get pods"},
+					{Use: "services", Short: "Get services"},
+					{Use: "deployments", Short: "Get deployments"},
+					{Use: "configmaps", Short: "Get configmaps"},
+					{Use: "secrets", Short: "Get secrets"},
 				},
 			},
 			{
-				Name:        "delete",
-				Description: "Delete resources",
+				Use:   "apply",
+				Short: "Apply configuration",
 				Flags: []contract.Flag{
-					{Name: "filename", Type: "string", Description: "File containing resources"},
-					{Name: "force", Type: "bool", Description: "Force deletion"},
-					{Name: "grace-period", Type: "int", Description: "Grace period in seconds"},
+					{Name: "filename", Type: "string", Usage: "File to apply"},
+					{Name: "recursive", Type: "bool", Usage: "Process directory recursively"},
+					{Name: "dry-run", Type: "string", Usage: "Dry run mode"},
 				},
 			},
 			{
-				Name:        "describe",
-				Description: "Describe resources",
+				Use:   "delete",
+				Short: "Delete resources",
 				Flags: []contract.Flag{
-					{Name: "show-events", Type: "bool", Description: "Show events"},
+					{Name: "filename", Type: "string", Usage: "File containing resources"},
+					{Name: "force", Type: "bool", Usage: "Force deletion"},
+					{Name: "grace-period", Type: "int", Usage: "Grace period in seconds"},
 				},
 			},
 			{
-				Name:        "logs",
-				Description: "Print logs",
+				Use:   "describe",
+				Short: "Describe resources",
 				Flags: []contract.Flag{
-					{Name: "follow", Type: "bool", Description: "Follow log output"},
-					{Name: "tail", Type: "int", Description: "Number of lines to show"},
-					{Name: "since", Type: "string", Description: "Show logs since duration"},
+					{Name: "show-events", Type: "bool", Usage: "Show events"},
+				},
+			},
+			{
+				Use:   "logs",
+				Short: "Print logs",
+				Flags: []contract.Flag{
+					{Name: "follow", Type: "bool", Usage: "Follow log output"},
+					{Name: "tail", Type: "int", Usage: "Number of lines to show"},
+					{Name: "since", Type: "string", Usage: "Show logs since duration"},
 				},
 			},
 		},
@@ -273,59 +246,59 @@ func generateKubectlLikeContract() *contract.Contract {
 
 func generateHelmLikeContract() *contract.Contract {
 	return &contract.Contract{
-		Name:        "helm-like",
-		Version:     "3.0.0",
-		Description: "A Helm-like CLI for performance testing",
-		GlobalFlags: []contract.Flag{
-			{Name: "debug", Type: "bool", Description: "Enable debug output"},
-			{Name: "kube-context", Type: "string", Description: "Kubernetes context"},
-			{Name: "namespace", Type: "string", Description: "Kubernetes namespace"},
+		Use:   "helm-like",
+		Short: "A Helm-like CLI for performance testing",
+		Long:  "A comprehensive Helm-like CLI tool designed for performance testing and validation.",
+		Flags: []contract.Flag{
+			{Name: "debug", Type: "bool", Usage: "Enable debug output", Persistent: true},
+			{Name: "kube-context", Type: "string", Usage: "Kubernetes context", Persistent: true},
+			{Name: "namespace", Type: "string", Usage: "Kubernetes namespace", Persistent: true},
 		},
 		Commands: []contract.Command{
 			{
-				Name:        "install",
-				Description: "Install a chart",
+				Use:   "install",
+				Short: "Install a chart",
 				Flags: []contract.Flag{
-					{Name: "values", Type: "stringSlice", Description: "Values files"},
-					{Name: "set", Type: "stringSlice", Description: "Set values"},
-					{Name: "dry-run", Type: "bool", Description: "Simulate install"},
-					{Name: "wait", Type: "bool", Description: "Wait for deployment"},
-					{Name: "timeout", Type: "string", Description: "Timeout duration"},
+					{Name: "values", Type: "stringSlice", Usage: "Values files"},
+					{Name: "set", Type: "stringSlice", Usage: "Set values"},
+					{Name: "dry-run", Type: "bool", Usage: "Simulate install"},
+					{Name: "wait", Type: "bool", Usage: "Wait for deployment"},
+					{Name: "timeout", Type: "string", Usage: "Timeout duration"},
 				},
 			},
 			{
-				Name:        "upgrade",
-				Description: "Upgrade a release",
+				Use:   "upgrade",
+				Short: "Upgrade a release",
 				Flags: []contract.Flag{
-					{Name: "install", Type: "bool", Description: "Install if not present"},
-					{Name: "force", Type: "bool", Description: "Force resource updates"},
-					{Name: "reset-values", Type: "bool", Description: "Reset values"},
+					{Name: "install", Type: "bool", Usage: "Install if not present"},
+					{Name: "force", Type: "bool", Usage: "Force resource updates"},
+					{Name: "reset-values", Type: "bool", Usage: "Reset values"},
 				},
 			},
 			{
-				Name:        "list",
-				Description: "List releases",
+				Use:   "list",
+				Short: "List releases",
 				Flags: []contract.Flag{
-					{Name: "all", Type: "bool", Description: "Show all releases"},
-					{Name: "deployed", Type: "bool", Description: "Show deployed releases"},
-					{Name: "failed", Type: "bool", Description: "Show failed releases"},
+					{Name: "all", Type: "bool", Usage: "Show all releases"},
+					{Name: "deployed", Type: "bool", Usage: "Show deployed releases"},
+					{Name: "failed", Type: "bool", Usage: "Show failed releases"},
 				},
 			},
 			{
-				Name:        "repo",
-				Description: "Manage repositories",
-				Subcommands: []contract.Command{
+				Use:   "repo",
+				Short: "Manage repositories",
+				Commands: []contract.Command{
 					{
-						Name:        "add",
-						Description: "Add a repository",
+						Use:   "add",
+						Short: "Add a repository",
 						Flags: []contract.Flag{
-							{Name: "username", Type: "string", Description: "Repository username"},
-							{Name: "password", Type: "string", Description: "Repository password"},
+							{Name: "username", Type: "string", Usage: "Repository username"},
+							{Name: "password", Type: "string", Usage: "Repository password"},
 						},
 					},
-					{Name: "list", Description: "List repositories"},
-					{Name: "update", Description: "Update repositories"},
-					{Name: "remove", Description: "Remove a repository"},
+					{Use: "list", Short: "List repositories"},
+					{Use: "update", Short: "Update repositories"},
+					{Use: "remove", Short: "Remove a repository"},
 				},
 			},
 		},
@@ -334,53 +307,53 @@ func generateHelmLikeContract() *contract.Contract {
 
 func generateDockerLikeContract() *contract.Contract {
 	return &contract.Contract{
-		Name:        "docker-like",
-		Version:     "20.0.0",
-		Description: "A Docker-like CLI for performance testing",
-		GlobalFlags: []contract.Flag{
-			{Name: "host", Type: "string", Description: "Docker host"},
-			{Name: "tls", Type: "bool", Description: "Use TLS"},
-			{Name: "log-level", Type: "string", Description: "Log level"},
+		Use:   "docker-like",
+		Short: "A Docker-like CLI for performance testing",
+		Long:  "A comprehensive Docker-like CLI tool designed for performance testing and validation.",
+		Flags: []contract.Flag{
+			{Name: "host", Type: "string", Usage: "Docker host", Persistent: true},
+			{Name: "tls", Type: "bool", Usage: "Use TLS", Persistent: true},
+			{Name: "log-level", Type: "string", Usage: "Log level", Persistent: true},
 		},
 		Commands: []contract.Command{
 			{
-				Name:        "run",
-				Description: "Run a container",
+				Use:   "run",
+				Short: "Run a container",
 				Flags: []contract.Flag{
-					{Name: "detach", Type: "bool", Description: "Run in background"},
-					{Name: "interactive", Type: "bool", Description: "Keep STDIN open"},
-					{Name: "tty", Type: "bool", Description: "Allocate pseudo-TTY"},
-					{Name: "env", Type: "stringSlice", Description: "Environment variables"},
-					{Name: "volume", Type: "stringSlice", Description: "Bind mount volumes"},
-					{Name: "publish", Type: "stringSlice", Description: "Publish ports"},
-					{Name: "name", Type: "string", Description: "Container name"},
+					{Name: "detach", Type: "bool", Usage: "Run in background"},
+					{Name: "interactive", Type: "bool", Usage: "Keep STDIN open"},
+					{Name: "tty", Type: "bool", Usage: "Allocate pseudo-TTY"},
+					{Name: "env", Type: "stringSlice", Usage: "Environment variables"},
+					{Name: "volume", Type: "stringSlice", Usage: "Bind mount volumes"},
+					{Name: "publish", Type: "stringSlice", Usage: "Publish ports"},
+					{Name: "name", Type: "string", Usage: "Container name"},
 				},
 			},
 			{
-				Name:        "ps",
-				Description: "List containers",
+				Use:   "ps",
+				Short: "List containers",
 				Flags: []contract.Flag{
-					{Name: "all", Type: "bool", Description: "Show all containers"},
-					{Name: "quiet", Type: "bool", Description: "Only display IDs"},
-					{Name: "filter", Type: "stringSlice", Description: "Filter output"},
+					{Name: "all", Type: "bool", Usage: "Show all containers"},
+					{Name: "quiet", Type: "bool", Usage: "Only display IDs"},
+					{Name: "filter", Type: "stringSlice", Usage: "Filter output"},
 				},
 			},
 			{
-				Name:        "images",
-				Description: "List images",
+				Use:   "images",
+				Short: "List images",
 				Flags: []contract.Flag{
-					{Name: "all", Type: "bool", Description: "Show all images"},
-					{Name: "digests", Type: "bool", Description: "Show digests"},
-					{Name: "quiet", Type: "bool", Description: "Only show IDs"},
+					{Name: "all", Type: "bool", Usage: "Show all images"},
+					{Name: "digests", Type: "bool", Usage: "Show digests"},
+					{Name: "quiet", Type: "bool", Usage: "Only show IDs"},
 				},
 			},
 			{
-				Name:        "build",
-				Description: "Build an image",
+				Use:   "build",
+				Short: "Build an image",
 				Flags: []contract.Flag{
-					{Name: "tag", Type: "stringSlice", Description: "Name and tag"},
-					{Name: "file", Type: "string", Description: "Dockerfile path"},
-					{Name: "no-cache", Type: "bool", Description: "Do not use cache"},
+					{Name: "tag", Type: "stringSlice", Usage: "Name and tag"},
+					{Name: "file", Type: "string", Usage: "Dockerfile path"},
+					{Name: "no-cache", Type: "bool", Usage: "Do not use cache"},
 				},
 			},
 		},

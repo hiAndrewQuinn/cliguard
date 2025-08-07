@@ -27,6 +27,8 @@ type InspectedCLI struct {
 	Use      string              ` + "`json:\"use\"`" + `
 	Short    string              ` + "`json:\"short\"`" + `
 	Long     string              ` + "`json:\"long,omitempty\"`" + `
+	Aliases  []string            ` + "`json:\"aliases,omitempty\"`" + `
+	Example  string              ` + "`json:\"example,omitempty\"`" + `
 	Flags    []InspectedFlag     ` + "`json:\"flags,omitempty\"`" + `
 	Commands []InspectedCommand  ` + "`json:\"commands,omitempty\"`" + `
 }
@@ -35,6 +37,8 @@ type InspectedCommand struct {
 	Use      string              ` + "`json:\"use\"`" + `
 	Short    string              ` + "`json:\"short\"`" + `
 	Long     string              ` + "`json:\"long,omitempty\"`" + `
+	Aliases  []string            ` + "`json:\"aliases,omitempty\"`" + `
+	Example  string              ` + "`json:\"example,omitempty\"`" + `
 	Flags    []InspectedFlag     ` + "`json:\"flags,omitempty\"`" + `
 	Commands []InspectedCommand  ` + "`json:\"commands,omitempty\"`" + `
 }
@@ -87,9 +91,11 @@ func findRootCommand() *cobra.Command {
 
 func inspectCommand(cmd *cobra.Command) InspectedCLI {
 	cli := InspectedCLI{
-		Use:   cmd.Use,
-		Short: cmd.Short,
-		Long:  cmd.Long,
+		Use:     cmd.Use,
+		Short:   cmd.Short,
+		Long:    cmd.Long,
+		Aliases: cmd.Aliases,
+		Example: cmd.Example,
 	}
 	
 	// Inspect local flags
@@ -127,9 +133,11 @@ func inspectCommand(cmd *cobra.Command) InspectedCLI {
 
 func inspectSubcommand(cmd *cobra.Command) InspectedCommand {
 	command := InspectedCommand{
-		Use:   cmd.Use,
-		Short: cmd.Short,
-		Long:  cmd.Long,
+		Use:     cmd.Use,
+		Short:   cmd.Short,
+		Long:    cmd.Long,
+		Aliases: cmd.Aliases,
+		Example: cmd.Example,
 	}
 	
 	// Inspect local flags only (persistent flags are inherited)
