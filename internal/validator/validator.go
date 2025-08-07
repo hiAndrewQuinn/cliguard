@@ -8,7 +8,47 @@ import (
 	"github.com/hiAndrewQuinn/cliguard/internal/inspector"
 )
 
-// Validate compares the actual CLI structure against the contract
+// Validate compares the actual CLI structure against the contract specification
+// and returns a detailed report of any discrepancies found.
+//
+// The validation process checks:
+//   - Command names, descriptions, and structure
+//   - Flag names, types, shorthands, and persistence
+//   - Nested subcommands recursively
+//
+// Example:
+//
+//	// Load the contract
+//	contractSpec, err := contract.Load("cliguard.yaml")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	
+//	// Inspect the actual CLI
+//	actualCLI, err := inspector.InspectProject(".", "cmd.NewRootCmd")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	
+//	// Validate
+//	result := validator.Validate(contractSpec, actualCLI)
+//	
+//	// Check results
+//	if !result.IsValid() {
+//	    fmt.Println("Validation failed:")
+//	    for _, err := range result.Errors {
+//	        fmt.Printf("  %s at %s\n", err.Message, err.Path)
+//	        if err.Expected != "" {
+//	            fmt.Printf("    Expected: %s\n", err.Expected)
+//	            fmt.Printf("    Got: %s\n", err.Got)
+//	        }
+//	    }
+//	    os.Exit(1)
+//	}
+//	fmt.Println("✓ CLI matches contract")
+//
+// The function returns a ValidationResult containing all validation errors found.
+// An empty Errors slice indicates successful validation.
 func Validate(expected *contract.Contract, actual *inspector.InspectedCLI) *ValidationResult {
 	result := &ValidationResult{Valid: true}
 
