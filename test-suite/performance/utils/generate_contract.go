@@ -12,7 +12,7 @@ import (
 // GenerateContract creates a contract YAML file for the specified CLI size
 func GenerateContract(dir string, size CLISize) error {
 	numCommands := getCommandCount(size)
-	
+
 	c := &contract.Contract{
 		Name:        "test-cli",
 		Version:     "1.0.0",
@@ -46,11 +46,11 @@ func GenerateContract(dir string, size CLISize) error {
 			},
 		},
 	}
-	
+
 	// Generate commands
 	for i := 0; i < numCommands; i++ {
 		cmd := generateContractCommand(i, size == Large)
-		
+
 		// Add subcommands for every 10th command
 		if i%10 == 0 && i > 0 {
 			for j := 0; j < 5; j++ {
@@ -73,21 +73,21 @@ func GenerateContract(dir string, size CLISize) error {
 				cmd.Subcommands = append(cmd.Subcommands, subcmd)
 			}
 		}
-		
+
 		c.Commands = append(c.Commands, cmd)
 	}
-	
+
 	// Marshal to YAML
 	data, err := yaml.Marshal(c)
 	if err != nil {
 		return fmt.Errorf("failed to marshal contract: %w", err)
 	}
-	
+
 	contractPath := filepath.Join(dir, "contract.yaml")
 	if err := os.WriteFile(contractPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write contract file: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -96,13 +96,13 @@ func generateContractCommand(index int, addMoreFlags bool) contract.Command {
 	if addMoreFlags {
 		flagCount = 15
 	}
-	
+
 	cmd := contract.Command{
 		Name:        fmt.Sprintf("command-%03d", index),
 		Description: fmt.Sprintf("Command %d for performance testing", index),
 		Flags:       make([]contract.Flag, 0, flagCount),
 	}
-	
+
 	// Add standard flags
 	cmd.Flags = append(cmd.Flags, contract.Flag{
 		Name:        "input",
@@ -110,38 +110,38 @@ func generateContractCommand(index int, addMoreFlags bool) contract.Command {
 		Description: "Input file path",
 		Required:    true,
 	})
-	
+
 	cmd.Flags = append(cmd.Flags, contract.Flag{
 		Name:        "output",
 		Type:        "string",
 		Description: "Output file path",
 	})
-	
+
 	cmd.Flags = append(cmd.Flags, contract.Flag{
 		Name:        "force",
 		Type:        "bool",
 		Description: "Force operation without confirmation",
 	})
-	
+
 	// Add additional flags
 	for i := 3; i < flagCount; i++ {
 		flag := generateContractFlag(i)
 		cmd.Flags = append(cmd.Flags, flag)
 	}
-	
+
 	return cmd
 }
 
 func generateContractFlag(index int) contract.Flag {
 	flagTypes := []string{"string", "bool", "int", "float64", "stringSlice"}
 	flagType := flagTypes[index%len(flagTypes)]
-	
+
 	flag := contract.Flag{
 		Name:        fmt.Sprintf("flag-%d", index),
 		Type:        flagType,
 		Description: fmt.Sprintf("%s flag %d", flagType, index),
 	}
-	
+
 	// Add validation for some flags
 	if index%7 == 0 && flagType == "int" {
 		min := 0
@@ -157,7 +157,7 @@ func generateContractFlag(index int) contract.Flag {
 			Message: "Must contain only alphanumeric characters and hyphens",
 		}
 	}
-	
+
 	// Add default values for some flags
 	if index%3 == 0 {
 		switch flagType {
@@ -172,14 +172,14 @@ func generateContractFlag(index int) contract.Flag {
 			flag.Default = &defaultVal
 		}
 	}
-	
+
 	return flag
 }
 
 // GenerateRealWorldContract creates contracts that simulate real-world CLIs
 func GenerateRealWorldContract(dir string, cliType string) error {
 	var c *contract.Contract
-	
+
 	switch cliType {
 	case "kubectl":
 		c = generateKubectlLikeContract()
@@ -190,18 +190,18 @@ func GenerateRealWorldContract(dir string, cliType string) error {
 	default:
 		return fmt.Errorf("unknown CLI type: %s", cliType)
 	}
-	
+
 	// Marshal to YAML
 	data, err := yaml.Marshal(c)
 	if err != nil {
 		return fmt.Errorf("failed to marshal contract: %w", err)
 	}
-	
+
 	contractPath := filepath.Join(dir, fmt.Sprintf("%s-contract.yaml", cliType))
 	if err := os.WriteFile(contractPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write contract file: %w", err)
 	}
-	
+
 	return nil
 }
 

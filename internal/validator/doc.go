@@ -13,12 +13,12 @@
 //	if err != nil {
 //	    return err
 //	}
-//	
+//
 //	actual, err := inspector.InspectProject(".", "cmd.NewRootCmd")
 //	if err != nil {
 //	    return err
 //	}
-//	
+//
 //	result := validator.Validate(contract, actual)
 //	if !result.IsValid() {
 //	    result.PrintReport()

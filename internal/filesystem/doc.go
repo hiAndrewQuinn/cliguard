@@ -14,7 +14,7 @@
 //	if err != nil {
 //	    return err
 //	}
-//	
+//
 //	err = fs.WriteFile("output.yaml", data, 0644)
 //	if err != nil {
 //	    return err
@@ -26,7 +26,7 @@
 //
 //	fs := filesystem.NewMemoryFileSystem()
 //	fs.WriteFile("test.yaml", []byte("content"), 0644)
-//	
+//
 //	// Your code that uses the filesystem
 //	data, err := fs.ReadFile("test.yaml")
 //

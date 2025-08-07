@@ -13,10 +13,10 @@ import (
 // createLargeContract creates a YAML contract file with the specified number of commands
 func createLargeContract(b *testing.B, numCommands int) string {
 	b.Helper()
-	
+
 	tmpDir := b.TempDir()
 	contractPath := filepath.Join(tmpDir, "contract.yaml")
-	
+
 	c := &contract.Contract{
 		Use:      "benchmark-cli",
 		Short:    "Large contract for benchmarking",
@@ -39,7 +39,7 @@ func createLargeContract(b *testing.B, numCommands int) string {
 			},
 		},
 	}
-	
+
 	// Generate commands
 	for i := 0; i < numCommands; i++ {
 		cmd := contract.Command{
@@ -47,7 +47,7 @@ func createLargeContract(b *testing.B, numCommands int) string {
 			Short: fmt.Sprintf("Test command %d with description", i),
 			Flags: make([]contract.Flag, 0, 10),
 		}
-		
+
 		// Add flags to each command
 		for j := 0; j < 10; j++ {
 			flag := contract.Flag{
@@ -57,7 +57,7 @@ func createLargeContract(b *testing.B, numCommands int) string {
 			}
 			cmd.Flags = append(cmd.Flags, flag)
 		}
-		
+
 		// Add subcommands to every 5th command
 		if i%5 == 0 && i > 0 {
 			for k := 0; k < 5; k++ {
@@ -66,7 +66,7 @@ func createLargeContract(b *testing.B, numCommands int) string {
 					Short: fmt.Sprintf("Subcommand %d description", k),
 					Flags: make([]contract.Flag, 0, 3),
 				}
-				
+
 				for l := 0; l < 3; l++ {
 					flag := contract.Flag{
 						Name:  fmt.Sprintf("subflag%d", l),
@@ -75,24 +75,24 @@ func createLargeContract(b *testing.B, numCommands int) string {
 					}
 					subcmd.Flags = append(subcmd.Flags, flag)
 				}
-				
+
 				cmd.Commands = append(cmd.Commands, subcmd)
 			}
 		}
-		
+
 		c.Commands = append(c.Commands, cmd)
 	}
-	
+
 	// Marshal to YAML
 	data, err := yaml.Marshal(c)
 	if err != nil {
 		b.Fatal(err)
 	}
-	
+
 	if err := os.WriteFile(contractPath, data, 0644); err != nil {
 		b.Fatal(err)
 	}
-	
+
 	return contractPath
 }
 
@@ -104,10 +104,10 @@ func getRandomType(index int) string {
 // createComplexContract creates a contract with complex nested structure
 func createComplexContract(b *testing.B) string {
 	b.Helper()
-	
+
 	tmpDir := b.TempDir()
 	contractPath := filepath.Join(tmpDir, "complex-contract.yaml")
-	
+
 	c := &contract.Contract{
 		Use:   "complex-cli",
 		Short: "Complex contract with nested commands",
@@ -135,21 +135,21 @@ func createComplexContract(b *testing.B) string {
 			{Name: "profile", Type: "string", Usage: "AWS profile"},
 		},
 	}
-	
+
 	// Add more commands with various complexity
 	for i := 0; i < 20; i++ {
 		c.Commands = append(c.Commands, generateComplexCommand(i))
 	}
-	
+
 	data, err := yaml.Marshal(c)
 	if err != nil {
 		b.Fatal(err)
 	}
-	
+
 	if err := os.WriteFile(contractPath, data, 0644); err != nil {
 		b.Fatal(err)
 	}
-	
+
 	return contractPath
 }
 
@@ -169,7 +169,7 @@ func generateComplexCommand(index int) contract.Command {
 
 func BenchmarkLoadSmallContract(b *testing.B) {
 	contractPath := createLargeContract(b, 10)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -182,7 +182,7 @@ func BenchmarkLoadSmallContract(b *testing.B) {
 
 func BenchmarkLoadMediumContract(b *testing.B) {
 	contractPath := createLargeContract(b, 50)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -195,7 +195,7 @@ func BenchmarkLoadMediumContract(b *testing.B) {
 
 func BenchmarkLoadLargeContract(b *testing.B) {
 	contractPath := createLargeContract(b, 100)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -208,7 +208,7 @@ func BenchmarkLoadLargeContract(b *testing.B) {
 
 func BenchmarkLoadExtraLargeContract(b *testing.B) {
 	contractPath := createLargeContract(b, 500)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -221,7 +221,7 @@ func BenchmarkLoadExtraLargeContract(b *testing.B) {
 
 func BenchmarkLoadComplexContract(b *testing.B) {
 	contractPath := createComplexContract(b)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -239,11 +239,11 @@ func BenchmarkSerializeContract(b *testing.B) {
 		Short:    "Benchmark CLI",
 		Commands: make([]contract.Command, 100),
 	}
-	
+
 	for i := 0; i < 100; i++ {
 		c.Commands[i] = generateComplexCommand(i)
 	}
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {

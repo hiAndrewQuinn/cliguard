@@ -23,21 +23,21 @@ type Contract struct {
 	// For the root command, this is the application name.
 	// Example: "git" for the git CLI
 	Use string `yaml:"use"`
-	
+
 	// Short is a brief one-line description shown in help listings (required).
 	// Should be concise and start with a capital letter.
 	// Example: "Fast, scalable, distributed revision control system"
 	Short string `yaml:"short"`
-	
+
 	// Long is a detailed description shown in the help command (optional).
 	// Can be multiple paragraphs and include usage examples.
 	Long string `yaml:"long,omitempty"`
-	
+
 	// Flags defines the command-line flags available on this command (optional).
 	// These are flags specific to this command, not inherited by subcommands
 	// unless marked as Persistent.
 	Flags []Flag `yaml:"flags,omitempty"`
-	
+
 	// Commands lists all subcommands available under this command (optional).
 	// Each subcommand can have its own flags and nested subcommands.
 	Commands []Command `yaml:"commands,omitempty"`
@@ -66,20 +66,20 @@ type Command struct {
 	// Can include arguments: "serve <port>" or just the name: "serve"
 	// Example: "clone [flags] <repository> [<directory>]"
 	Use string `yaml:"use"`
-	
+
 	// Short is a brief one-line description for command listings (required).
 	// Should be concise and start with a capital letter.
 	// Example: "Clone a repository into a new directory"
 	Short string `yaml:"short"`
-	
+
 	// Long is a detailed description shown in the help command (optional).
 	// Can include multiple paragraphs, usage examples, and notes.
 	Long string `yaml:"long,omitempty"`
-	
+
 	// Flags defines command-specific flags (optional).
 	// These flags are only available when this command is invoked.
 	Flags []Flag `yaml:"flags,omitempty"`
-	
+
 	// Commands lists nested subcommands under this command (optional).
 	// Allows building complex command hierarchies.
 	// Example: "git remote add" where "add" is nested under "remote"
@@ -109,22 +109,22 @@ type Flag struct {
 	// Used with double dash: --name
 	// Example: "verbose" for --verbose
 	Name string `yaml:"name"`
-	
+
 	// Shorthand is the single-letter abbreviation (optional).
 	// Used with single dash: -s
 	// Example: "v" for -v
 	Shorthand string `yaml:"shorthand,omitempty"`
-	
+
 	// Usage is the help text shown for this flag (required).
 	// Should be concise and describe what the flag does.
 	// Example: "Enable verbose output"
 	Usage string `yaml:"usage"`
-	
+
 	// Type specifies the flag's data type (required).
 	// Must be a valid pflag type name.
 	// Common types: string, bool, int, float64, duration, stringSlice
 	Type string `yaml:"type"`
-	
+
 	// Persistent indicates if the flag is inherited by subcommands (optional).
 	// When true, this flag is available to all nested subcommands.
 	// Default: false (flag is local to the command)

@@ -122,7 +122,7 @@ func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPat
 			cmd.Printf("⚠️  Warning: Proceeding with unsupported framework %s. Results may be unreliable.\n\n", framework)
 		}
 	}
-	
+
 	opts := service.ValidateOptions{
 		ProjectPath:  projectPath,
 		ContractPath: contractPath,
@@ -203,7 +203,7 @@ func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint 
 			cmd.Printf("⚠️  Warning: Proceeding with unsupported framework %s. Results may be unreliable.\n\n", framework)
 		}
 	}
-	
+
 	opts := service.GenerateOptions{
 		ProjectPath: projectPath,
 		Entrypoint:  entrypoint,
@@ -256,16 +256,16 @@ func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string, inte
 	if err != nil {
 		return fmt.Errorf("failed to resolve project path: %w", err)
 	}
-	
+
 	discoverer := discovery.NewDiscoverer(absPath, nil)
-	
+
 	fmt.Fprintf(cmd.OutOrStdout(), "Searching for CLI entrypoints in: %s\n\n", projectPath)
-	
+
 	candidates, err := discoverer.DiscoverEntrypoints()
 	if err != nil {
 		return fmt.Errorf("failed to discover entrypoints: %w", err)
 	}
-	
+
 	// Handle interactive mode
 	if interactive && len(candidates) > 1 {
 		selector := discovery.NewInteractiveSelector(cmd.InOrStdin(), cmd.OutOrStdout())
@@ -273,13 +273,13 @@ func (r *DefaultDiscoverRunner) Run(cmd *cobra.Command, projectPath string, inte
 		if err != nil {
 			return err
 		}
-		
-		fmt.Fprintf(cmd.OutOrStdout(), "\nSelected entrypoint:\n%s\n", 
+
+		fmt.Fprintf(cmd.OutOrStdout(), "\nSelected entrypoint:\n%s\n",
 			discovery.FormatSelectedEntrypoint(selected))
 		return nil
 	}
-	
-	discovery.PrintCandidates(cmd.OutOrStdout(), candidates, force)
+
+	discovery.PrintCandidates(cmd.OutOrStdout(), candidates, projectPath, force)
 	return nil
 }
 

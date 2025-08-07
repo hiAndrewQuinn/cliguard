@@ -18,12 +18,12 @@ const (
 // GenerateCLIProject creates a Go CLI project with the specified number of commands
 func GenerateCLIProject(dir string, size CLISize) error {
 	numCommands := getCommandCount(size)
-	
+
 	// Create directory structure
 	if err := os.MkdirAll(filepath.Join(dir, "cmd"), 0755); err != nil {
 		return err
 	}
-	
+
 	// Generate go.mod
 	goModContent := `module test-cli
 
@@ -37,7 +37,7 @@ require (
 	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goModContent), 0644); err != nil {
 		return err
 	}
-	
+
 	// Generate main.go
 	mainContent := `package main
 
@@ -55,13 +55,13 @@ func main() {
 	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte(mainContent), 0644); err != nil {
 		return err
 	}
-	
+
 	// Generate root command
 	rootContent := generateRootCommand(numCommands)
 	if err := os.WriteFile(filepath.Join(dir, "cmd", "root.go"), []byte(rootContent), 0644); err != nil {
 		return err
 	}
-	
+
 	// Generate individual command files
 	for i := 0; i < numCommands; i++ {
 		cmdContent := generateCommand(i, size == Large)
@@ -70,7 +70,7 @@ func main() {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -119,12 +119,12 @@ func NewRootCmd() *cobra.Command {
 	return rootCmd
 }
 `
-	
+
 	var cmdRegistrations string
 	for i := 0; i < numCommands; i++ {
 		cmdRegistrations += fmt.Sprintf("\trootCmd.AddCommand(newCmd%03d())\n", i)
 	}
-	
+
 	return fmt.Sprintf(template, numCommands, numCommands, cmdRegistrations)
 }
 
@@ -133,7 +133,7 @@ func generateCommand(index int, addMoreFlags bool) string {
 	if addMoreFlags {
 		flagCount = 15
 	}
-	
+
 	template := `package cmd
 
 import (
@@ -164,18 +164,18 @@ func newCmd%03d() *cobra.Command {
 	return cmd
 }
 `
-	
+
 	var flags string
 	for i := 0; i < flagCount; i++ {
 		flags += generateFlag(i)
 	}
-	
+
 	// Add subcommands for every 10th command
 	var subcommands string
 	if index%10 == 0 && index > 0 {
 		subcommands = generateSubcommands(index)
 	}
-	
+
 	return fmt.Sprintf(template, index, index, index, index, index, flags, subcommands)
 }
 
@@ -187,7 +187,7 @@ func generateFlag(index int) string {
 		`cmd.Flags().Float64("flag-%d", 0.0, "Float flag %d")`,
 		`cmd.Flags().StringSlice("flag-%d", nil, "String slice flag %d")`,
 	}
-	
+
 	// Special flags
 	if index == 0 {
 		return fmt.Sprintf("\tcmd.Flags().String(\"input\", \"\", \"Input file path\")\n")
@@ -198,7 +198,7 @@ func generateFlag(index int) string {
 	if index == 2 {
 		return fmt.Sprintf("\tcmd.Flags().Bool(\"force\", false, \"Force operation without confirmation\")\n")
 	}
-	
+
 	flagType := flagTypes[index%len(flagTypes)]
 	return fmt.Sprintf("\t"+flagType+"\n", index, index)
 }

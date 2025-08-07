@@ -45,10 +45,10 @@ func DetectEntrypointFramework(projectPath, entrypoint string, fs filesystem.Fil
 
 	// Look for Go files in the package directory
 	packageDir := filepath.Join(projectPath, relPath)
-	
+
 	// Try common file names
 	fileNames := []string{"root.go", "main.go", "cmd.go", "app.go"}
-	
+
 	// Also try the function name as a file
 	if functionName != "" {
 		fileNames = append([]string{strings.ToLower(functionName) + ".go"}, fileNames...)
@@ -99,21 +99,21 @@ func detectFrameworkInFile(filePath string, fs filesystem.FileSystem) (string, e
 	for _, imp := range node.Imports {
 		if imp.Path != nil {
 			importPath := strings.Trim(imp.Path.Value, `"`)
-			
+
 			// Check for Cobra
 			if strings.Contains(importPath, "github.com/spf13/cobra") {
 				return "cobra", nil
 			}
-			
+
 			// Check for urfave/cli
 			if strings.Contains(importPath, "github.com/urfave/cli") {
 				return "urfave/cli", nil
 			}
-			
+
 			// Check for kingpin
 			if strings.Contains(importPath, "kingpin") &&
-				(strings.Contains(importPath, "gopkg.in/alecthomas") || 
-				 strings.Contains(importPath, "github.com/alecthomas")) {
+				(strings.Contains(importPath, "gopkg.in/alecthomas") ||
+					strings.Contains(importPath, "github.com/alecthomas")) {
 				return "kingpin", nil
 			}
 		}

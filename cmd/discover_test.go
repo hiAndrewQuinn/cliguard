@@ -209,11 +209,11 @@ func TestDiscoverIntegration(t *testing.T) {
 
 func TestInteractiveSelection(t *testing.T) {
 	tests := []struct {
-		name        string
-		candidates  []discovery.EntrypointCandidate
-		input       string
-		wantErr     bool
-		wantIndex   int
+		name       string
+		candidates []discovery.EntrypointCandidate
+		input      string
+		wantErr    bool
+		wantIndex  int
 	}{
 		{
 			name: "select first option",
@@ -319,4 +319,3 @@ go 1.21
 `
 	require.NoError(t, os.WriteFile(goMod, []byte(modContent), 0644))
 }
-

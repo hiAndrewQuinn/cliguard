@@ -23,16 +23,16 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	
+//
 //	// Inspect the actual CLI
 //	actualCLI, err := inspector.InspectProject(".", "cmd.NewRootCmd")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	
+//
 //	// Validate
 //	result := validator.Validate(contractSpec, actualCLI)
-//	
+//
 //	// Check results
 //	if !result.IsValid() {
 //	    fmt.Println("Validation failed:")

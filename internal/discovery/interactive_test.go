@@ -87,7 +87,7 @@ func TestSelectCandidate(t *testing.T) {
 			},
 		},
 		{
-			name: "empty candidates returns error",
+			name:       "empty candidates returns error",
 			candidates: []EntrypointCandidate{},
 			input:      "",
 			wantErr:    true,
@@ -98,16 +98,16 @@ func TestSelectCandidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			input := strings.NewReader(tt.input)
 			output := &bytes.Buffer{}
-			
+
 			selector := NewInteractiveSelector(input, output)
-			
+
 			result, err := selector.SelectCandidate(tt.candidates)
-			
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SelectCandidate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if !tt.wantErr && result != nil {
 				// Find index of result
 				resultIndex := -1
@@ -117,18 +117,18 @@ func TestSelectCandidate(t *testing.T) {
 						break
 					}
 				}
-				
+
 				if resultIndex != tt.expectedIndex {
-					t.Errorf("Expected candidate at index %d, got index %d", 
+					t.Errorf("Expected candidate at index %d, got index %d",
 						tt.expectedIndex, resultIndex)
 				}
 			}
-			
+
 			// Check output contains expected strings
 			outputStr := output.String()
 			for _, expected := range tt.expectedOutput {
 				if !strings.Contains(outputStr, expected) {
-					t.Errorf("Expected output to contain %q, but it didn't.\nFull output:\n%s", 
+					t.Errorf("Expected output to contain %q, but it didn't.\nFull output:\n%s",
 						expected, outputStr)
 				}
 			}
