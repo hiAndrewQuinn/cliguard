@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/hiAndrewQuinn/cliguard/internal/contract"
+	"github.com/hiAndrewQuinn/cliguard/internal/errors"
 	"github.com/hiAndrewQuinn/cliguard/internal/inspector"
 	"github.com/hiAndrewQuinn/cliguard/internal/validator"
 )
@@ -44,12 +45,12 @@ func (s *ValidateService) Validate(opts ValidateOptions) (*ValidateResult, error
 	// Resolve project path
 	absProjectPath, err := filepath.Abs(opts.ProjectPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve project path: %w", err)
+		return nil, fmt.Errorf("failed to resolve project path '%s': %w", opts.ProjectPath, err)
 	}
 
 	// Check if project path exists
 	if _, err := os.Stat(absProjectPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("project path does not exist: %s", absProjectPath)
+		return nil, errors.ProjectNotFoundError{Path: absProjectPath}
 	}
 
 	// Determine contract path
@@ -72,7 +73,11 @@ func (s *ValidateService) Validate(opts ValidateOptions) (*ValidateResult, error
 	// Inspect the project
 	actualStructure, err := s.Inspector(absProjectPath, opts.Entrypoint)
 	if err != nil {
-		return nil, fmt.Errorf("failed to inspect project: %w", err)
+		return nil, errors.InspectionError{
+			ProjectPath: absProjectPath,
+			Entrypoint:  opts.Entrypoint,
+			Err:         err,
+		}
 	}
 
 	// Validate the actual structure against the contract

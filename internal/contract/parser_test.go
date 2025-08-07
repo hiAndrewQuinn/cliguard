@@ -110,7 +110,7 @@ flags:
     type: badtype
 `,
 			wantErr:     true,
-			errContains: "flag 'config': invalid type 'badtype'",
+			errContains: "Invalid flag type 'badtype' for flag 'config'",
 		},
 		{
 			name: "invalid_duplicate_flag_names",
@@ -390,7 +390,7 @@ func TestLoadErrors(t *testing.T) {
 				return "/nonexistent/file.yaml"
 			},
 			wantErr:     true,
-			errContains: "failed to read contract file",
+			errContains: "Cannot load contract file",
 		},
 		{
 			name: "invalid_yaml",
@@ -401,7 +401,7 @@ func TestLoadErrors(t *testing.T) {
 				return tmpFile
 			},
 			wantErr:     true,
-			errContains: "failed to parse contract YAML",
+			errContains: "Failed to parse contract YAML file",
 		},
 	}
 

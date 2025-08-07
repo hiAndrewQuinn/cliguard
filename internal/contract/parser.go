@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hiAndrewQuinn/cliguard/internal/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,16 +22,23 @@ func Load(contractPath string) (*Contract, error) {
 
 	data, err := os.ReadFile(absPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read contract file: %w", err)
+		return nil, errors.WrapContractNotFound(absPath, err)
 	}
 
 	var contract Contract
 	if err := yaml.Unmarshal(data, &contract); err != nil {
-		return nil, fmt.Errorf("failed to parse contract YAML: %w", err)
+		return nil, errors.ContractParseError{
+			Path:    absPath,
+			Err:     err,
+			Content: string(data),
+		}
 	}
 
 	if err := validate(&contract); err != nil {
-		return nil, fmt.Errorf("contract validation failed: %w", err)
+		return nil, errors.InvalidContractError{
+			Path:    absPath,
+			Message: err.Error(),
+		}
 	}
 
 	return &contract, nil
@@ -136,7 +144,15 @@ func validateFlags(flags []Flag) error {
 			"count": true,
 		}
 		if !validTypes[flag.Type] {
-			return fmt.Errorf("flag '%s': invalid type '%s'", flag.Name, flag.Type)
+			var validTypesList []string
+			for t := range validTypes {
+				validTypesList = append(validTypesList, t)
+			}
+			return errors.FlagTypeError{
+				FlagName:    flag.Name,
+				InvalidType: flag.Type,
+				ValidTypes:  validTypesList,
+			}
 		}
 	}
 

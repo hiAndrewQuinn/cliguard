@@ -66,7 +66,7 @@ func TestRunValidate_Errors(t *testing.T) {
 			},
 			args:        []string{"--project-path", "/nonexistent/path"},
 			wantErr:     true,
-			errContains: "project path does not exist",
+			errContains: "Project path does not exist",
 		},
 		{
 			name: "contract_file_not_found",

@@ -224,7 +224,7 @@ func TestInspector_Inspect(t *testing.T) {
 				fs.MkdirTempErr = errors.New("permission denied")
 			},
 			wantErr:       true,
-			wantErrString: "failed to create temp directory",
+			wantErrString: "Failed to create temporary directory",
 		},
 		{
 			name: "invalid entrypoint",
@@ -234,7 +234,7 @@ func TestInspector_Inspect(t *testing.T) {
 			},
 			setupMocks:    func(fs *filesystem.MockFileSystem, exec *executor.MockExecutor) {},
 			wantErr:       true,
-			wantErrString: "failed to parse entrypoint",
+			wantErrString: "Failed to parse entrypoint",
 		},
 		{
 			name: "go mod init failure",
