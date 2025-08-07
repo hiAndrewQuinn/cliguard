@@ -42,10 +42,10 @@ func (m *MockFileSystem) Stat(name string) (os.FileInfo, error) {
 
 func TestDiscoverEntrypoints(t *testing.T) {
 	tests := []struct {
-		name           string
-		files          map[string]string
-		expectedCount  int
-		expectedFirst  string
+		name              string
+		files             map[string]string
+		expectedCount     int
+		expectedFirst     string
 		expectedFramework string
 	}{
 		{
@@ -156,7 +156,7 @@ func main() {
 			mockFS := &MockFileSystem{
 				Files: make(map[string][]byte),
 			}
-			
+
 			for path, content := range tt.files {
 				mockFS.Files[path] = []byte(content)
 			}
@@ -167,13 +167,13 @@ func main() {
 				// Create relative path from /project
 				relPath := strings.TrimPrefix(path, "/project/")
 				fullPath := filepath.Join(tempDir, relPath)
-				
+
 				// Create directory if needed
 				dir := filepath.Dir(fullPath)
 				if err := os.MkdirAll(dir, 0755); err != nil {
 					t.Fatalf("Failed to create directory %s: %v", dir, err)
 				}
-				
+
 				// Write file
 				if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
 					t.Fatalf("Failed to write file %s: %v", fullPath, err)
@@ -193,7 +193,7 @@ func main() {
 			if len(candidates) != tt.expectedCount {
 				t.Errorf("Expected %d candidates, got %d", tt.expectedCount, len(candidates))
 				for i, c := range candidates {
-					t.Logf("Candidate %d: %s (line %d, pattern: %s)", 
+					t.Logf("Candidate %d: %s (line %d, pattern: %s)",
 						i+1, c.Line, c.LineNumber, c.Pattern)
 				}
 			}
@@ -201,12 +201,12 @@ func main() {
 			// Check first candidate if expected
 			if tt.expectedCount > 0 {
 				if !strings.Contains(candidates[0].Line, tt.expectedFirst) {
-					t.Errorf("Expected first candidate to contain %q, got %q", 
+					t.Errorf("Expected first candidate to contain %q, got %q",
 						tt.expectedFirst, candidates[0].Line)
 				}
-				
+
 				if candidates[0].Framework != tt.expectedFramework {
-					t.Errorf("Expected framework %q, got %q", 
+					t.Errorf("Expected framework %q, got %q",
 						tt.expectedFramework, candidates[0].Framework)
 				}
 			}
@@ -287,12 +287,12 @@ func TestPrintCandidates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			PrintCandidates(&buf, tt.candidates, false)
-			
+			PrintCandidates(&buf, tt.candidates, ".", false)
+
 			output := buf.String()
 			for _, want := range tt.wantOutput {
 				if !strings.Contains(output, want) {
-					t.Errorf("Expected output to contain %q, but it didn't.\nFull output:\n%s", 
+					t.Errorf("Expected output to contain %q, but it didn't.\nFull output:\n%s",
 						want, output)
 				}
 			}
@@ -366,7 +366,7 @@ func TestCalculatePackagePath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			discoverer := &Discoverer{}
 			result := discoverer.calculatePackagePath(tt.modulePath, tt.filePath)
-			
+
 			if result != tt.expected {
 				t.Errorf("Expected package path %q, got %q", tt.expected, result)
 			}

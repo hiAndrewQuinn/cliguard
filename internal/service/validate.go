@@ -24,7 +24,7 @@ type ValidateService struct {
 	// ContractLoader loads contract specifications from YAML files.
 	// Defaults to contract.Load
 	ContractLoader func(string) (*contract.Contract, error)
-	
+
 	// Inspector analyzes Go projects to extract CLI structure.
 	// Defaults to inspector.InspectProject
 	Inspector func(string, string) (*inspector.InspectedCLI, error)
@@ -60,11 +60,11 @@ type ValidateOptions struct {
 	// ProjectPath is the path to the Go project to validate (required).
 	// Can be absolute or relative path.
 	ProjectPath string
-	
+
 	// ContractPath is the path to the contract YAML file (optional).
 	// If empty, defaults to "cliguard.yaml" in the project directory.
 	ContractPath string
-	
+
 	// Entrypoint is the function that creates the root command (required).
 	// Format: "package.Function" or "receiver.Method"
 	// Example: "cmd.NewRootCmd" or "(*App).NewRootCmd"
@@ -86,10 +86,10 @@ type ValidateOptions struct {
 type ValidateResult struct {
 	// Success indicates whether validation passed (true) or failed (false)
 	Success bool
-	
+
 	// Result contains detailed validation results including all errors found
 	Result *validator.ValidationResult
-	
+
 	// Error contains any error that prevented validation from running
 	// (different from validation failures)
 	Error error

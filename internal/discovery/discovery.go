@@ -61,30 +61,30 @@ func (d *Discoverer) DiscoverEntrypoints() ([]EntrypointCandidate, error) {
 	// Sort by confidence (highest first) and prioritize non-test directories
 	sort.Slice(candidates, func(i, j int) bool {
 		// Check if files are in test directories
-		iIsTest := strings.Contains(candidates[i].FilePath, "test") || 
+		iIsTest := strings.Contains(candidates[i].FilePath, "test") ||
 			strings.Contains(candidates[i].FilePath, "fixtures") ||
 			strings.Contains(candidates[i].FilePath, "test-suite")
-		jIsTest := strings.Contains(candidates[j].FilePath, "test") || 
+		jIsTest := strings.Contains(candidates[j].FilePath, "test") ||
 			strings.Contains(candidates[j].FilePath, "fixtures") ||
 			strings.Contains(candidates[j].FilePath, "test-suite")
-		
+
 		// Prioritize non-test files
 		if iIsTest != jIsTest {
 			return !iIsTest // non-test files come first
 		}
-		
+
 		// Then sort by confidence
 		if candidates[i].Confidence != candidates[j].Confidence {
 			return candidates[i].Confidence > candidates[j].Confidence
 		}
-		
+
 		// Finally, prefer files in cmd/ directory
 		iInCmd := strings.Contains(candidates[i].FilePath, "/cmd/")
 		jInCmd := strings.Contains(candidates[j].FilePath, "/cmd/")
 		if iInCmd != jInCmd {
 			return iInCmd
 		}
-		
+
 		return candidates[i].FilePath < candidates[j].FilePath
 	})
 
@@ -226,7 +226,7 @@ func (d *Discoverer) getApplicablePatterns(imports []string) []Pattern {
 		if seen[pattern.Name] {
 			continue
 		}
-		
+
 		for _, requiredImport := range pattern.Imports {
 			found := false
 			for _, fileImport := range imports {
@@ -291,7 +291,7 @@ func (d *Discoverer) extractFunctionSignature(content string, lineNumber int) st
 
 	// Compile regex once
 	funcStartRegex := regexp.MustCompile(`^func\s+`)
-	
+
 	// Look backwards for function declaration
 	for i := lineNumber - 1; i >= 0 && i >= lineNumber-10; i-- {
 		line := lines[i]
@@ -307,8 +307,29 @@ func (d *Discoverer) extractFunctionSignature(content string, lineNumber int) st
 	return ""
 }
 
+// formatGenerateCommand creates a ready-to-use cliguard generate command for a candidate
+func formatGenerateCommand(candidate EntrypointCandidate, projectPath string) string {
+	entrypoint := candidate.PackagePath
+	if candidate.FunctionSignature != "" && strings.Contains(candidate.FunctionSignature, "NewRootCmd") {
+		entrypoint = candidate.PackagePath + ".NewRootCmd"
+	}
+
+	if projectPath == "" {
+		projectPath = "."
+	}
+
+	cmd := fmt.Sprintf("cliguard generate --project-path %s --entrypoint \"%s\"", projectPath, entrypoint)
+
+	// Add force flag if it's a non-Cobra framework
+	if candidate.Framework != "cobra" {
+		cmd += " --force"
+	}
+
+	return cmd
+}
+
 // PrintCandidates prints the discovered candidates in a user-friendly format
-func PrintCandidates(w io.Writer, candidates []EntrypointCandidate, force bool) {
+func PrintCandidates(w io.Writer, candidates []EntrypointCandidate, projectPath string, force bool) {
 	if len(candidates) == 0 {
 		fmt.Fprintln(w, "No CLI entrypoints found.")
 		fmt.Fprintln(w, "Try specifying the entrypoint manually with --entrypoint flag.")
@@ -322,15 +343,19 @@ func PrintCandidates(w io.Writer, candidates []EntrypointCandidate, force bool) 
 		fmt.Fprintf(w, "   File: %s:%d\n", candidate.FilePath, candidate.LineNumber)
 		fmt.Fprintf(w, "   Pattern: %s\n", candidate.Pattern)
 		fmt.Fprintf(w, "   Code: %s\n", candidate.Line)
-		
+
 		if candidate.FunctionSignature != "" {
 			fmt.Fprintf(w, "   Function: %s\n", candidate.FunctionSignature)
 		}
-		
+
 		if candidate.PackagePath != "" {
 			fmt.Fprintf(w, "   Package: %s\n", candidate.PackagePath)
 		}
-		
+
+		// Add the ready-to-use generate command
+		generateCmd := formatGenerateCommand(candidate, projectPath)
+		fmt.Fprintf(w, "   Command: %s\n", generateCmd)
+
 		// Add warning for non-Cobra frameworks
 		if candidate.Framework != "cobra" {
 			fmt.Fprintf(w, "\n   ⚠️  Note: cliguard currently only generates and validates Cobra CLIs.\n")
@@ -339,7 +364,7 @@ func PrintCandidates(w io.Writer, candidates []EntrypointCandidate, force bool) 
 				fmt.Fprintf(w, "\n   (Use --force flag with generate/validate to proceed anyway)")
 			}
 		}
-		
+
 		fmt.Fprintln(w)
 	}
 
@@ -351,7 +376,7 @@ func PrintCandidates(w io.Writer, candidates []EntrypointCandidate, force bool) 
 		} else {
 			fmt.Fprintf(w, "  --entrypoint %s\n", candidates[0].PackagePath)
 		}
-		
+
 		// Add warning if suggested entrypoint is not Cobra
 		if candidates[0].Framework != "cobra" {
 			fmt.Fprintf(w, "\n⚠️  Note: This %s entrypoint is not currently supported by cliguard.\n", candidates[0].Framework)

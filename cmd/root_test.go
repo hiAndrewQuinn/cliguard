@@ -165,11 +165,11 @@ func TestIntegration_ValidateCommand(t *testing.T) {
 
 func TestValidateCommand_DefaultProjectPath(t *testing.T) {
 	// Test that validate command uses current directory when project-path is not provided
-	
+
 	// Save original runner and restore after test
 	originalRunner := validateRunner
 	defer func() { validateRunner = originalRunner }()
-	
+
 	// Mock runner to capture the project path
 	var capturedPath string
 	mockRunner := &mockValidateRunner{
@@ -179,21 +179,21 @@ func TestValidateCommand_DefaultProjectPath(t *testing.T) {
 		},
 	}
 	validateRunner = mockRunner
-	
+
 	cmd := NewRootCmd()
 	cmd.SetArgs([]string{"validate"})
-	
+
 	err := cmd.Execute()
 	if err != nil {
 		t.Errorf("Execute() error = %v", err)
 	}
-	
+
 	// Get expected current directory
 	expectedPath, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get current directory: %v", err)
 	}
-	
+
 	if capturedPath != expectedPath {
 		t.Errorf("projectPath = %q, want %q (current directory)", capturedPath, expectedPath)
 	}

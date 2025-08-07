@@ -35,7 +35,7 @@ func (s *InteractiveSelector) SelectCandidate(candidates []EntrypointCandidate) 
 	// Display candidates
 	fmt.Fprintln(s.output, "\nMultiple entrypoints found. Please select one:")
 	fmt.Fprintln(s.output)
-	
+
 	for i, candidate := range candidates {
 		fmt.Fprintf(s.output, "%d. %s (confidence: %d%%)\n", i+1, candidate.Framework, candidate.Confidence)
 		fmt.Fprintf(s.output, "   File: %s:%d\n", candidate.FilePath, candidate.LineNumber)
@@ -51,35 +51,35 @@ func (s *InteractiveSelector) SelectCandidate(candidates []EntrypointCandidate) 
 
 	// Get user selection
 	reader := bufio.NewReader(s.input)
-	
+
 	for {
 		fmt.Fprintf(s.output, "Enter selection (1-%d) or 'q' to quit: ", len(candidates))
-		
+
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			return nil, fmt.Errorf("failed to read input: %w", err)
 		}
-		
+
 		input = strings.TrimSpace(input)
-		
+
 		// Check for quit
 		if strings.ToLower(input) == "q" {
 			return nil, fmt.Errorf("selection cancelled by user")
 		}
-		
+
 		// Try to parse as number
 		num, err := strconv.Atoi(input)
 		if err != nil {
 			fmt.Fprintf(s.output, "Invalid input. Please enter a number between 1 and %d.\n", len(candidates))
 			continue
 		}
-		
+
 		// Check bounds
 		if num < 1 || num > len(candidates) {
 			fmt.Fprintf(s.output, "Invalid selection. Please enter a number between 1 and %d.\n", len(candidates))
 			continue
 		}
-		
+
 		return &candidates[num-1], nil
 	}
 }

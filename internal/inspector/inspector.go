@@ -252,19 +252,19 @@ func getFlagType(flag *pflag.Flag) string {
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	
+//
 //	// Use the inspected structure
 //	fmt.Printf("CLI: %s\n", cli.Use)
 //	fmt.Printf("Description: %s\n", cli.Short)
-//	
+//
 //	// List all commands
 //	for _, cmd := range cli.Commands {
 //	    fmt.Printf("  Command: %s - %s\n", cmd.Use, cmd.Short)
 //	}
-//	
+//
 //	// List all flags
 //	for _, flag := range cli.Flags {
-//	    fmt.Printf("  Flag: --%s (-%s) [%s]: %s\n", 
+//	    fmt.Printf("  Flag: --%s (-%s) [%s]: %s\n",
 //	        flag.Name, flag.Shorthand, flag.Type, flag.Usage)
 //	}
 //

@@ -14,7 +14,7 @@
 //	if err != nil {
 //	    return err
 //	}
-//	
+//
 //	// Access the inspected structure
 //	fmt.Printf("CLI: %s\n", cli.Use)
 //	for _, flag := range cli.Flags {

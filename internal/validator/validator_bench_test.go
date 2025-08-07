@@ -264,7 +264,7 @@ func BenchmarkValidateDeeplyNestedCLI(b *testing.B) {
 
 	// Create matching CLI structure
 	rootCmd := &cobra.Command{Use: "deep-cli", Short: "Deeply nested CLI"}
-	
+
 	var addNested func(*cobra.Command, int)
 	addNested = func(parent *cobra.Command, depth int) {
 		if depth == 0 {
@@ -281,7 +281,7 @@ func BenchmarkValidateDeeplyNestedCLI(b *testing.B) {
 			addNested(cmd, depth-1)
 		}
 	}
-	
+
 	addNested(rootCmd, 5)
 	cli := convertCobraToInspected(rootCmd)
 

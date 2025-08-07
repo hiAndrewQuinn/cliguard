@@ -237,4 +237,3 @@ func WrapContractNotFound(path string, err error) error {
 	}
 	return err
 }
-

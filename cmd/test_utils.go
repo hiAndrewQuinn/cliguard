@@ -16,13 +16,13 @@ func contains(s, substr string) bool {
 func setupTestFixtures(t *testing.T) string {
 	t.Helper()
 	fixtureDir := filepath.Join("..", "test", "fixtures", "simple-cli")
-	
+
 	// Ensure go.mod is tidy
 	cmd := exec.Command("go", "mod", "tidy")
 	cmd.Dir = fixtureDir
 	if err := cmd.Run(); err != nil {
 		t.Skipf("Failed to tidy test fixture: %v", err)
 	}
-	
+
 	return fixtureDir
 }

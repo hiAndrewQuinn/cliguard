@@ -21,7 +21,7 @@
 // The executor interface makes it easy to mock command execution in tests:
 //
 //	type MockExecutor struct{}
-//	
+//
 //	func (m *MockExecutor) Execute(name string, args ...string) (string, error) {
 //	    if name == "go" && args[0] == "build" {
 //	        return "Build successful", nil
