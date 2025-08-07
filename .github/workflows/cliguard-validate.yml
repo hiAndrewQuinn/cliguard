@@ -1,0 +1,41 @@
+name: Validate CLI Contract
+
+on:
+  pull_request:
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'cliguard.yaml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          
+      - name: Install cliguard
+        run: go install github.com/hiAndrewQuinn/cliguard@latest
+        
+      - name: Validate CLI structure
+        run: |
+          cliguard validate \
+            --project-path . \
+            --entrypoint "github.com/${{ github.repository }}/cmd.NewRootCmd"
+            
+      - name: Comment on PR if validation fails
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ CLI contract validation failed! This PR introduces breaking changes to the CLI structure. Please review the changes or update the contract file.'
+            })

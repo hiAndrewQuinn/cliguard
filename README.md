@@ -219,6 +219,10 @@ cliguard validate --project-path . --entrypoint "github.com/org/project/cmd.NewR
 
 ## CI/CD Integration
 
+Cliguard provides comprehensive CI/CD integration examples and workflows for various platforms.
+
+### Quick Start
+
 Add Cliguard to your CI pipeline to catch breaking changes:
 
 ```yaml
@@ -228,6 +232,21 @@ Add Cliguard to your CI pipeline to catch breaking changes:
     go install github.com/hiAndrewQuinn/cliguard@latest
     cliguard validate --project-path . --entrypoint "github.com/org/repo/cmd.NewRootCmd"
 ```
+
+### Full Examples
+
+- **GitHub Actions**: See [`.github/workflows/`](.github/workflows/) for validation and auto-generation workflows
+- **Platform Examples**: Browse [`examples/`](examples/) for GitLab CI, CircleCI, Jenkins, and more
+- **Documentation**: Read the comprehensive [CI/CD Integration Guide](docs/ci-cd-integration.md)
+
+### Supported Platforms
+
+- ✅ GitHub Actions (full workflow examples)
+- ✅ GitLab CI
+- ✅ CircleCI  
+- ✅ Jenkins Pipeline
+- ✅ Docker-based validation
+- ✅ Makefile integration
 
 ## Example Output
 
