@@ -49,7 +49,7 @@ func TestExecute(t *testing.T) {
 
 	// Create a mock runner
 	mockRunner := &MockValidateRunner{
-		RunFunc: func(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+		RunFunc: func(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error {
 			return nil
 		},
 	}
@@ -107,7 +107,7 @@ func TestRunValidate_Success(t *testing.T) {
 
 	// Create mock runner that returns success
 	mockRunner := &MockValidateRunner{
-		RunFunc: func(cmd *cobra.Command, projectPath, contractPath, entrypoint string) error {
+		RunFunc: func(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error {
 			cmd.Println("✅ Validation passed! CLI structure matches the contract.")
 			return nil
 		},
@@ -461,7 +461,7 @@ func TestGenerateCommand(t *testing.T) {
 			name: "successful generation",
 			args: []string{"generate", "--project-path", "/test/project", "--entrypoint", "cmd.NewRootCmd"},
 			setupMock: func(m *MockGenerateRunner) {
-				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string, force bool) error {
 					if projectPath != "/test/project" {
 						t.Errorf("projectPath = %q, want %q", projectPath, "/test/project")
 					}
@@ -487,7 +487,7 @@ func TestGenerateCommand(t *testing.T) {
 			name: "default project-path to current directory",
 			args: []string{"generate"},
 			setupMock: func(m *MockGenerateRunner) {
-				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string, force bool) error {
 					// Check that projectPath is set to current directory
 					cwd, _ := os.Getwd()
 					if projectPath != cwd {
@@ -508,7 +508,7 @@ func TestGenerateCommand(t *testing.T) {
 			name: "generation error",
 			args: []string{"generate", "--project-path", "/test/project"},
 			setupMock: func(m *MockGenerateRunner) {
-				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string, force bool) error {
 					return errors.New("generation failed")
 				}
 			},
@@ -518,7 +518,7 @@ func TestGenerateCommand(t *testing.T) {
 			name: "no entrypoint specified",
 			args: []string{"generate", "--project-path", "/test/project"},
 			setupMock: func(m *MockGenerateRunner) {
-				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
+				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string, force bool) error {
 					if entrypoint != "" {
 						t.Errorf("entrypoint = %q, want empty string", entrypoint)
 					}
