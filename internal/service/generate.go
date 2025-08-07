@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hiAndrewQuinn/cliguard/internal/contract"
 	"github.com/hiAndrewQuinn/cliguard/internal/inspector"
@@ -12,6 +13,7 @@ import (
 type GenerateOptions struct {
 	ProjectPath string
 	Entrypoint  string
+	Timeout     time.Duration
 }
 
 // GenerateService handles the generation of contract files
@@ -25,7 +27,15 @@ func NewGenerateService() *GenerateService {
 // Generate inspects a CLI and generates a contract YAML string
 func (s *GenerateService) Generate(opts GenerateOptions) (string, error) {
 	// Inspect the project to get the CLI structure
-	inspectedCLI, err := inspector.InspectProject(opts.ProjectPath, opts.Entrypoint)
+	var inspectedCLI *inspector.InspectedCLI
+	var err error
+	
+	if opts.Timeout > 0 {
+		inspectedCLI, err = inspector.InspectProjectWithTimeout(opts.ProjectPath, opts.Entrypoint, opts.Timeout)
+	} else {
+		inspectedCLI, err = inspector.InspectProject(opts.ProjectPath, opts.Entrypoint)
+	}
+	
 	if err != nil {
 		return "", fmt.Errorf("failed to inspect project: %w", err)
 	}

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/hiAndrewQuinn/cliguard/internal/discovery"
 	"github.com/hiAndrewQuinn/cliguard/internal/service"
@@ -28,6 +29,7 @@ var (
 	projectPath  string
 	contractPath string
 	entrypoint   string
+	timeout      time.Duration
 	interactive  bool
 	force        bool
 )
@@ -52,6 +54,7 @@ and flags match the expected specification.`,
 	validateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (defaults to current directory)")
 	validateCmd.Flags().StringVar(&contractPath, "contract", "", "Path to the contract file (defaults to cliguard.yaml in project path)")
 	validateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
+	validateCmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "Timeout for CLI inspection (e.g., 30s, 2m, 5m)")
 	validateCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
 
 	rootCmd.AddCommand(validateCmd)
@@ -68,6 +71,7 @@ creating an initial contract from an existing CLI.`,
 
 	generateCmd.Flags().StringVar(&projectPath, "project-path", "", "Path to the root of the target Go project (defaults to current directory)")
 	generateCmd.Flags().StringVar(&entrypoint, "entrypoint", "", "The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)")
+	generateCmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "Timeout for CLI inspection (e.g., 30s, 2m, 5m)")
 	generateCmd.Flags().BoolVar(&force, "force", false, "Force operation even with unsupported CLI frameworks")
 
 	rootCmd.AddCommand(generateCmd)
@@ -95,7 +99,7 @@ This helps you quickly identify where commands are defined in unfamiliar codebas
 
 // ValidateRunner interface for dependency injection
 type ValidateRunner interface {
-	Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error
+	Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, timeout time.Duration, force bool) error
 }
 
 // DefaultValidateRunner is the default implementation
@@ -111,7 +115,7 @@ func NewDefaultValidateRunner() *DefaultValidateRunner {
 }
 
 // Run executes the validation
-func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, force bool) error {
+func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPath, entrypoint string, timeout time.Duration, force bool) error {
 	// Check if entrypoint is provided and detect framework
 	if entrypoint != "" {
 		framework, err := discovery.DetectEntrypointFramework(projectPath, entrypoint, nil)
@@ -127,6 +131,7 @@ func (r *DefaultValidateRunner) Run(cmd *cobra.Command, projectPath, contractPat
 		ProjectPath:  projectPath,
 		ContractPath: contractPath,
 		Entrypoint:   entrypoint,
+		Timeout:      timeout,
 	}
 
 	// Print progress messages
@@ -171,12 +176,12 @@ func runValidate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 	}
-	return validateRunner.Run(cmd, path, contractPath, entrypoint, force)
+	return validateRunner.Run(cmd, path, contractPath, entrypoint, timeout, force)
 }
 
 // GenerateRunner interface for dependency injection
 type GenerateRunner interface {
-	Run(cmd *cobra.Command, projectPath, entrypoint string, force bool) error
+	Run(cmd *cobra.Command, projectPath, entrypoint string, timeout time.Duration, force bool) error
 }
 
 // DefaultGenerateRunner is the default implementation
@@ -192,7 +197,7 @@ func NewDefaultGenerateRunner() *DefaultGenerateRunner {
 }
 
 // Run executes the generation
-func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string, force bool) error {
+func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint string, timeout time.Duration, force bool) error {
 	// Check if entrypoint is provided and detect framework
 	if entrypoint != "" {
 		framework, err := discovery.DetectEntrypointFramework(projectPath, entrypoint, nil)
@@ -207,6 +212,7 @@ func (r *DefaultGenerateRunner) Run(cmd *cobra.Command, projectPath, entrypoint 
 	opts := service.GenerateOptions{
 		ProjectPath: projectPath,
 		Entrypoint:  entrypoint,
+		Timeout:     timeout,
 	}
 
 	// Run generation
@@ -233,7 +239,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 	}
-	return generateRunner.Run(cmd, path, entrypoint, force)
+	return generateRunner.Run(cmd, path, entrypoint, timeout, force)
 }
 
 // DiscoverRunner interface for dependency injection

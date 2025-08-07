@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
@@ -34,12 +35,24 @@ func (m *MockExecutor) Command(name string, args ...string) Command {
 	return cmd
 }
 
+// CommandContext creates a new mock command with context
+func (m *MockExecutor) CommandContext(ctx context.Context, name string, args ...string) Command {
+	cmd := &mockCommand{
+		executor: m,
+		name:     name,
+		args:     args,
+		ctx:      ctx,
+	}
+	return cmd
+}
+
 // mockCommand implements the Command interface for testing
 type mockCommand struct {
 	executor *MockExecutor
 	name     string
 	args     []string
 	dir      string
+	ctx      context.Context
 }
 
 // SetDir sets the working directory
