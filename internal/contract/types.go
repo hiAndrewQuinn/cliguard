@@ -37,7 +37,16 @@ type Contract struct {
 	// These are flags specific to this command, not inherited by subcommands
 	// unless marked as Persistent.
 	Flags []Flag `yaml:"flags,omitempty"`
-
+	
+	// Aliases are alternative names for this command (optional).
+	// Users can invoke the command using any of these aliases.
+	// Example: ["s", "start"] for a "serve" command
+	Aliases []string `yaml:"aliases,omitempty"`
+	
+	// Example provides usage examples for this command (optional).
+	// Can be multi-line text showing common usage patterns.
+	Example string `yaml:"example,omitempty"`
+	
 	// Commands lists all subcommands available under this command (optional).
 	// Each subcommand can have its own flags and nested subcommands.
 	Commands []Command `yaml:"commands,omitempty"`
@@ -79,7 +88,16 @@ type Command struct {
 	// Flags defines command-specific flags (optional).
 	// These flags are only available when this command is invoked.
 	Flags []Flag `yaml:"flags,omitempty"`
-
+	
+	// Aliases are alternative names for this command (optional).
+	// Users can invoke the command using any of these aliases.
+	// Example: ["s", "start"] for a "serve" command
+	Aliases []string `yaml:"aliases,omitempty"`
+	
+	// Example provides usage examples for this command (optional).
+	// Can be multi-line text showing common usage patterns.
+	Example string `yaml:"example,omitempty"`
+	
 	// Commands lists nested subcommands under this command (optional).
 	// Allows building complex command hierarchies.
 	// Example: "git remote add" where "add" is nested under "remote"

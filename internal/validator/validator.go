@@ -2,6 +2,7 @@ package validator
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/hiAndrewQuinn/cliguard/internal/contract"
@@ -79,6 +80,19 @@ func validateRootCommand(expected *contract.Contract, actual *inspector.Inspecte
 	if expected.Long != "" && expected.Long != actual.Long {
 		result.AddError(ErrorTypeMismatch, "root", expected.Long, actual.Long, "Mismatch in long description")
 	}
+
+	// Validate aliases if specified
+	if len(expected.Aliases) > 0 && !slicesEqual(expected.Aliases, actual.Aliases) {
+		result.AddError(ErrorTypeMismatch, "root", 
+			strings.Join(expected.Aliases, ", "), 
+			strings.Join(actual.Aliases, ", "), 
+			"Mismatch in command aliases")
+	}
+
+	// Validate example if specified
+	if expected.Example != "" && expected.Example != actual.Example {
+		result.AddError(ErrorTypeMismatch, "root", expected.Example, actual.Example, "Mismatch in command example")
+	}
 }
 
 func validateCommands(parentPath string, expected []contract.Command, actual []inspector.InspectedCommand, result *ValidationResult) {
@@ -132,6 +146,19 @@ func validateCommand(path string, expected *contract.Command, actual *inspector.
 	// Validate Long description if specified
 	if expected.Long != "" && expected.Long != actual.Long {
 		result.AddError(ErrorTypeMismatch, path, expected.Long, actual.Long, "Mismatch in long description")
+	}
+
+	// Validate aliases if specified
+	if len(expected.Aliases) > 0 && !slicesEqual(expected.Aliases, actual.Aliases) {
+		result.AddError(ErrorTypeMismatch, path, 
+			strings.Join(expected.Aliases, ", "), 
+			strings.Join(actual.Aliases, ", "), 
+			"Mismatch in command aliases")
+	}
+
+	// Validate example if specified
+	if expected.Example != "" && expected.Example != actual.Example {
+		result.AddError(ErrorTypeMismatch, path, expected.Example, actual.Example, "Mismatch in command example")
 	}
 
 	// Validate flags
@@ -206,6 +233,37 @@ func validateFlag(path string, expected *contract.Flag, actual *inspector.Inspec
 		}
 		result.AddError(ErrorTypeMismatch, path, expectedPersistence, actualPersistence, "Flag persistence mismatch")
 	}
+}
+
+// slicesEqual compares two string slices for equality, ignoring order.
+// Returns true if both slices contain the same elements, regardless of order.
+func slicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	
+	if len(a) == 0 {
+		return true
+	}
+	
+	// Create copies to avoid modifying original slices
+	aCopy := make([]string, len(a))
+	bCopy := make([]string, len(b))
+	copy(aCopy, a)
+	copy(bCopy, b)
+	
+	// Sort both slices
+	sort.Strings(aCopy)
+	sort.Strings(bCopy)
+	
+	// Compare sorted slices
+	for i := range aCopy {
+		if aCopy[i] != bCopy[i] {
+			return false
+		}
+	}
+	
+	return true
 }
 
 func joinPath(parent, child string) string {

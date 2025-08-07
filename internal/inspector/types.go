@@ -38,7 +38,13 @@ type InspectedCLI struct {
 
 	// Flags contains all flags defined on the root command
 	Flags []InspectedFlag `json:"flags,omitempty"`
-
+	
+	// Aliases contains alternative names for this CLI (omitempty)
+	Aliases []string `json:"aliases,omitempty"`
+	
+	// Example contains usage examples for this CLI (omitempty)
+	Example string `json:"example,omitempty"`
+	
 	// Commands contains all direct subcommands
 	Commands []InspectedCommand `json:"commands,omitempty"`
 }
@@ -57,7 +63,13 @@ type InspectedCommand struct {
 
 	// Flags contains command-specific flags (not inherited)
 	Flags []InspectedFlag `json:"flags,omitempty"`
-
+	
+	// Aliases contains alternative names for this command (omitempty)
+	Aliases []string `json:"aliases,omitempty"`
+	
+	// Example contains usage examples for this command (omitempty)
+	Example string `json:"example,omitempty"`
+	
 	// Commands contains nested subcommands
 	Commands []InspectedCommand `json:"commands,omitempty"`
 }
