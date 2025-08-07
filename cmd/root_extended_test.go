@@ -482,19 +482,23 @@ func TestGenerateCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "missing required project-path",
+			name: "default project-path to current directory",
 			args: []string{"generate"},
 			setupMock: func(m *MockGenerateRunner) {
-				// Mock shouldn't be called
 				m.RunFunc = func(cmd *cobra.Command, projectPath, entrypoint string) error {
-					t.Error("RunFunc should not be called")
+					// Check that projectPath is set to current directory
+					cwd, _ := os.Getwd()
+					if projectPath != cwd {
+						t.Errorf("projectPath = %q, want %q (current directory)", projectPath, cwd)
+					}
+					fmt.Fprint(cmd.OutOrStdout(), "# Cliguard contract file\nuse: testapp\n")
 					return nil
 				}
 			},
-			wantErr: true,
+			wantErr: false,
 			checkFunc: func(t *testing.T, output string) {
-				if !contains(output, "required flag(s) \"project-path\" not set") {
-					t.Errorf("output = %q, want to contain %q", output, "required flag(s) \"project-path\" not set")
+				if !contains(output, "# Cliguard contract file") {
+					t.Errorf("output = %q, want to contain %q", output, "# Cliguard contract file")
 				}
 			},
 		},

@@ -40,7 +40,7 @@ Cliguard is a contract-based validation tool for Cobra CLIs. It ensures that com
 ## Data Flow
 
 1. **User Input**: User runs `cliguard validate` with flags:
-   - `--project-path`: Target project location
+   - `--project-path`: Target project location (defaults to current directory)
    - `--contract`: Contract file path (defaults to `cliguard.yaml`)
    - `--entrypoint`: Function that returns root command
 
