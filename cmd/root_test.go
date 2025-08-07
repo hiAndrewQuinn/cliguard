@@ -125,13 +125,13 @@ func TestIntegration_ValidateCommand(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	// Use the test fixture we already have
-	fixturePath := filepath.Join("..", "test", "fixtures", "simple-cli")
+	// Set up test fixtures
+	fixturePath := setupTestFixtures(t)
 	contractPath := filepath.Join(fixturePath, "cliguard.yaml")
 
-	// Check if fixture exists
-	if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
-		t.Skip("Test fixture not found, skipping integration test")
+	// Check if contract exists
+	if _, err := os.Stat(contractPath); os.IsNotExist(err) {
+		t.Fatalf("Contract file not found at %s", contractPath)
 	}
 
 	cmd := NewRootCmd()
@@ -149,10 +149,6 @@ func TestIntegration_ValidateCommand(t *testing.T) {
 
 	err := cmd.Execute()
 	if err != nil {
-		// Check if it's because go modules aren't initialized
-		if contains(err.Error(), "failed to get dependencies") {
-			t.Skip("Skipping integration test - fixture needs go mod tidy")
-		}
 		// For validation failures, err will be nil but exit code would be 1
 		// So we only fail on actual execution errors
 		if !contains(errBuf.String(), "Validation failed") {
