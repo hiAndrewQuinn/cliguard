@@ -2,6 +2,7 @@ package inspector
 
 import (
 	"strings"
+	"time"
 )
 
 const inspectorTemplate = `package main
@@ -274,10 +275,17 @@ func getFlagType(flag *pflag.Flag) string {
 //   - The project fails to build
 //   - The CLI doesn't use cobra
 func InspectProject(projectPath, entrypoint string) (*InspectedCLI, error) {
+	return InspectProjectWithTimeout(projectPath, entrypoint, 0)
+}
+
+// InspectProjectWithTimeout analyzes a Go project to extract its CLI structure with a timeout.
+// A timeout of 0 means no timeout will be applied.
+func InspectProjectWithTimeout(projectPath, entrypoint string, timeout time.Duration) (*InspectedCLI, error) {
 	// Create inspector with default dependencies
 	inspector := NewInspector(Config{
 		ProjectPath: projectPath,
 		Entrypoint:  entrypoint,
+		Timeout:     timeout,
 	})
 
 	return inspector.Inspect()

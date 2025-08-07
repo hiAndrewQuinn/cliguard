@@ -1,12 +1,14 @@
 package executor
 
 import (
+	"context"
 	"os/exec"
 )
 
 // CommandExecutor is an interface for executing system commands
 type CommandExecutor interface {
 	Command(name string, args ...string) Command
+	CommandContext(ctx context.Context, name string, args ...string) Command
 }
 
 // Command represents an executable command
@@ -22,6 +24,11 @@ type OSExecutor struct{}
 // Command creates a new command
 func (e *OSExecutor) Command(name string, args ...string) Command {
 	return &osCommand{cmd: exec.Command(name, args...)}
+}
+
+// CommandContext creates a new command with context
+func (e *OSExecutor) CommandContext(ctx context.Context, name string, args ...string) Command {
+	return &osCommand{cmd: exec.CommandContext(ctx, name, args...)}
 }
 
 // osCommand wraps exec.Cmd to implement our Command interface

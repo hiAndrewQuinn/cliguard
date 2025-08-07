@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/hiAndrewQuinn/cliguard/internal/errors"
 	"github.com/hiAndrewQuinn/cliguard/internal/executor"
@@ -17,6 +18,7 @@ import (
 type Config struct {
 	ProjectPath string
 	Entrypoint  string
+	Timeout     time.Duration
 	FileSystem  filesystem.FileSystem
 	Executor    executor.CommandExecutor
 }
@@ -34,6 +36,11 @@ func NewInspector(config Config) *Inspector {
 	}
 	if config.Executor == nil {
 		config.Executor = &executor.OSExecutor{}
+	}
+
+	// Wrap executor with timeout if specified
+	if config.Timeout > 0 {
+		config.Executor = executor.NewTimeoutExecutor(config.Executor, config.Timeout)
 	}
 
 	return &Inspector{

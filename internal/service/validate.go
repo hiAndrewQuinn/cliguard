@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/hiAndrewQuinn/cliguard/internal/contract"
 	"github.com/hiAndrewQuinn/cliguard/internal/errors"
@@ -28,6 +29,10 @@ type ValidateService struct {
 	// Inspector analyzes Go projects to extract CLI structure.
 	// Defaults to inspector.InspectProject
 	Inspector func(string, string) (*inspector.InspectedCLI, error)
+	
+	// InspectorWithTimeout analyzes Go projects with timeout support.
+	// Defaults to inspector.InspectProjectWithTimeout
+	InspectorWithTimeout func(string, string, time.Duration) (*inspector.InspectedCLI, error)
 }
 
 // NewValidateService creates a new validation service with default dependencies.
@@ -42,8 +47,9 @@ type ValidateService struct {
 //	})
 func NewValidateService() *ValidateService {
 	return &ValidateService{
-		ContractLoader: contract.Load,
-		Inspector:      inspector.InspectProject,
+		ContractLoader:       contract.Load,
+		Inspector:            inspector.InspectProject,
+		InspectorWithTimeout: inspector.InspectProjectWithTimeout,
 	}
 }
 
@@ -69,6 +75,10 @@ type ValidateOptions struct {
 	// Format: "package.Function" or "receiver.Method"
 	// Example: "cmd.NewRootCmd" or "(*App).NewRootCmd"
 	Entrypoint string
+	
+	// Timeout for CLI inspection (optional).
+	// If zero, no timeout is applied.
+	Timeout time.Duration
 }
 
 // ValidateResult contains the result of validation.
@@ -155,7 +165,14 @@ func (s *ValidateService) Validate(opts ValidateOptions) (*ValidateResult, error
 	}
 
 	// Inspect the project
-	actualStructure, err := s.Inspector(absProjectPath, opts.Entrypoint)
+	var actualStructure *inspector.InspectedCLI
+	
+	if opts.Timeout > 0 {
+		actualStructure, err = s.InspectorWithTimeout(absProjectPath, opts.Entrypoint, opts.Timeout)
+	} else {
+		actualStructure, err = s.Inspector(absProjectPath, opts.Entrypoint)
+	}
+	
 	if err != nil {
 		return nil, errors.InspectionError{
 			ProjectPath: absProjectPath,
