@@ -1,22 +1,69 @@
 # Cliguard
 
-A contract-based validation tool for Cobra CLIs that ensures your command structure remains consistent over time.
+**Keep your CLI consistent. Catch breaking changes before they ship.**
 
-## Overview
+Cliguard is a contract-based validation tool for Cobra CLIs that helps you maintain API stability by detecting unintended changes to commands, flags, and their configurations.
 
-Cliguard validates Go CLIs built with [Cobra](https://github.com/spf13/cobra) against a YAML contract file. It helps maintain API stability by detecting unintended changes to commands, flags, and their configurations. It can also generate contract files from existing CLIs, making it easy to get started.
+## Why Cliguard?
 
-**Current Focus**: Cliguard currently supports Cobra-based CLIs exclusively. While our `discover` command can identify entrypoints from other popular CLI frameworks (urfave/cli, standard library flag, kingpin), contract generation and validation features are limited to Cobra at this time.
+Your CLI is an API that users depend on. When commands change unexpectedly or flags disappear, it breaks user scripts and workflows. Cliguard prevents this by:
 
-## Features
+- 🔍 **Discovering** CLI entrypoints automatically in any Go project  
+- 📄 **Generating** contracts from your existing CLI structure  
+- ✅ **Validating** that your CLI matches its contract over time  
 
-- **Entrypoint discovery**: Automatically find CLI entrypoints in Go projects across multiple frameworks
-- **Contract generation**: Automatically generate contract files from existing Cobra CLIs
-- **Contract-based validation**: Define your expected CLI structure in a simple YAML file
-- **Comprehensive checking**: Validates commands, subcommands, flags, types, and descriptions
-- **CI/CD friendly**: Exit codes and clear output make it perfect for automated pipelines
-- **Dogfooding**: Cliguard validates its own CLI structure
-- **Convenient defaults**: No need to specify `--project-path` when running from your project directory
+## Quick Start: 3 Commands to CLI Safety
+
+The typical workflow is dead simple:
+
+### 1. **Discover** - Find your CLI entrypoint
+```bash
+cliguard discover --project-path /path/to/your/cli
+```
+
+This scans your project and suggests the best entrypoint:
+```
+Found 2 potential CLI entrypoint(s):
+
+1. cobra (confidence: 95%)
+   Function: func NewRootCmd() *cobra.Command
+   Package: github.com/myorg/mycli/cmd
+
+Suggested entrypoint:
+  --entrypoint github.com/myorg/mycli/cmd.NewRootCmd
+```
+
+### 2. **Generate** - Create your first contract
+```bash
+cliguard generate --entrypoint "github.com/myorg/mycli/cmd.NewRootCmd" > cliguard.yaml
+```
+
+This creates a YAML file defining your current CLI structure:
+```yaml
+use: mycli
+short: My awesome CLI application
+flags:
+  - name: config
+    usage: Config file path
+    type: string
+commands:
+  - use: serve
+    short: Start the web server
+    flags:
+      - name: port
+        usage: Port to listen on
+        type: int
+```
+
+### 3. **Validate** - Prevent breaking changes
+```bash
+cliguard validate --entrypoint "github.com/myorg/mycli/cmd.NewRootCmd"
+```
+
+Add this to your CI pipeline and catch problems early:
+```
+✅ Validation passed! CLI structure matches the contract.
+```
 
 ## Installation
 
@@ -25,316 +72,151 @@ go install github.com/hiAndrewQuinn/cliguard@latest
 ```
 
 Or build from source:
-
 ```bash
 git clone https://github.com/hiAndrewQuinn/cliguard.git
-cd cliguard
-go build -o cliguard .
+cd cliguard && go build -o cliguard .
 ```
 
-## Quick Start
+## The Discover → Generate → Validate Loop
 
-### Example: Cliguard Validating Itself
+Cliguard is designed around a simple workflow that fits naturally into development:
 
-Cliguard uses itself to ensure its own CLI structure remains consistent. Here's how:
+### When starting with an existing CLI
+1. **Discover** your entrypoint (one time setup)
+2. **Generate** your initial contract from current state  
+3. **Validate** in CI to catch future changes
 
-1. Clone and build Cliguard:
+### When developing new features
+1. **Validate** to check current state matches contract
+2. Update your CLI code as needed
+3. **Generate** a new contract if changes are intentional
+4. **Validate** again to confirm everything matches
+
+### In your CI pipeline
+Just run **validate** - it will catch any unintended changes and fail the build if your CLI drifts from its contract.
+
+## Examples
+
+### Working with Unfamiliar Codebases
+
+Don't know where a CLI's commands are defined? Discover them instantly:
 
 ```bash
-git clone https://github.com/hiAndrewQuinn/cliguard.git
-cd cliguard
-go build -o cliguard .
+cliguard discover --project-path ./kubernetes --interactive
 ```
 
-2. Look at Cliguard's own contract file:
+Shows all potential entrypoints with confidence scores, letting you pick the right one interactively.
 
-```bash
-cat cliguard.yaml
-```
+### Adding to CI/CD
 
-Output:
+**GitHub Actions:**
 ```yaml
-# Cliguard contract for the cliguard CLI itself (dogfooding!)
-use: cliguard
-short: A contract-based validation tool for Cobra CLIs
-
-commands:
-  - use: validate
-    short: Validate a Cobra CLI against a contract file
-    flags:
-      - name: project-path
-        usage: Path to the root of the target Go project (defaults to current directory)
-        type: string
-      - name: contract
-        usage: Path to the contract file (defaults to cliguard.yaml in project path)
-        type: string
-      - name: entrypoint
-        usage: The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)
-        type: string
-```
-
-3. Run Cliguard on itself:
-
-```bash
-# From the cliguard directory, project-path defaults to current directory
-./cliguard validate --entrypoint "github.com/hiAndrewQuinn/cliguard/cmd.NewRootCmd"
-```
-
-Output:
-```
-Loading contract from: /home/andrew/Code/cliguard/cliguard.yaml
-Inspecting CLI structure in: /home/andrew/Code/cliguard
-Validating CLI structure against contract...
-✅ Validation passed! CLI structure matches the contract.
-```
-
-### Using Cliguard in Your Project
-
-1. Generate a contract file from your existing CLI:
-
-```bash
-# From your project directory
-cliguard generate --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
-```
-
-This creates a `cliguard.yaml` file like:
-
-```yaml
-use: myapp
-short: My awesome CLI application
-
-flags:
-  - name: config
-    shorthand: c
-    usage: Config file path
-    type: string
-    persistent: true
-
-commands:
-  - use: serve
-    short: Start the web server
-    flags:
-      - name: port
-        shorthand: p
-        usage: Port to listen on
-        type: int
-  - use: migrate
-    short: Run database migrations
-```
-
-2. Run validation to ensure your CLI structure remains consistent:
-
-```bash
-# From your project directory
-cliguard validate --entrypoint "github.com/myorg/myapp/cmd.NewRootCmd"
-```
-
-## Contract Schema
-
-The contract file (`cliguard.yaml`) mirrors Cobra's command structure:
-
-### Root Level
-
-```yaml
-use: string        # Command name (required)
-short: string      # Short description (required)
-long: string       # Long description (optional)
-flags: []Flag      # Root command flags (optional)
-commands: []Command # Subcommands (optional)
-```
-
-### Command Structure
-
-```yaml
-commands:
-  - use: string      # Command name (required)
-    short: string    # Short description (required)
-    long: string     # Long description (optional)
-    flags: []Flag    # Command-specific flags (optional)
-    commands: []Command # Nested subcommands (optional)
-```
-
-### Flag Structure
-
-```yaml
-flags:
-  - name: string       # Flag name (required)
-    shorthand: string  # Single character shorthand (optional)
-    usage: string      # Help text (required)
-    type: string       # Flag type (required)
-    persistent: bool   # Is persistent flag (optional, default: false)
-```
-
-Supported flag types:
-- `string`
-- `bool`
-- `int`
-- `int64`
-- `float64`
-- `duration`
-- `stringSlice`
-
-## Usage
-
-### Discover Entrypoints
-
-Find CLI entrypoints in a Go project by analyzing common CLI framework patterns. The discover command can identify entrypoints from:
-- ✅ Cobra (`github.com/spf13/cobra`) - **Fully supported**
-- ⏳ urfave/cli (`github.com/urfave/cli`) - *Discovery only, generation/validation coming soon*
-- ⏳ Standard library flag package - *Discovery only, generation/validation coming soon*
-- ⏳ Kingpin (`github.com/alecthomas/kingpin`) - *Discovery only, generation/validation coming soon*
-
-```bash
-cliguard discover --project-path /path/to/project
-```
-
-Use interactive mode to select from multiple candidates:
-
-```bash
-cliguard discover --project-path /path/to/project --interactive
-# or
-cliguard discover --project-path /path/to/project -i
-```
-
-Example output:
-```
-Searching for CLI entrypoints in: .
-
-Found 3 potential CLI entrypoint(s):
-
-1. cobra (confidence: 95%)
-   File: cmd/root.go:15
-   Pattern: Function returning root cobra.Command
-   Code: func NewRootCmd() *cobra.Command {
-   Function: func NewRootCmd() *cobra.Command
-   Package: github.com/myorg/myproject/cmd
-
-2. cobra (confidence: 85%)
-   File: cmd/root.go:20
-   Pattern: Cobra Execute function
-   Code: func Execute() {
-   Function: func Execute()
-   Package: github.com/myorg/myproject/cmd
-
-Suggested entrypoint:
-  --entrypoint github.com/myorg/myproject/cmd.NewRootCmd
-```
-
-### Generate a Contract
-
-Generate a contract file from an existing Cobra CLI:
-
-```bash
-# From your project directory (no --project-path needed)
-cliguard generate
-
-# Or specify a different project
-cliguard generate --project-path /path/to/project
-```
-
-The generated contract is printed to stdout, so pipe it to a file:
-
-```bash
-# From your project directory
-cliguard generate > cliguard.yaml
-
-# Or with a specific project path
-cliguard generate --project-path /path/to/project > my-contract.yaml
-```
-
-For projects where the root command is returned by a function:
-
-```bash
-# From your project directory
-cliguard generate --entrypoint "github.com/org/project/cmd.NewRootCmd" > cliguard.yaml
-```
-
-### Using the --force Flag
-
-If you're working with a non-Cobra CLI framework and want to experiment:
-
-```bash
-# Force generation despite unsupported framework (experimental)
-cliguard generate --project-path . --entrypoint "github.com/org/project/cmd.NewApp" --force
-
-# Force validation despite unsupported framework (experimental)
-cliguard validate --project-path . --entrypoint "github.com/org/project/cmd.NewApp" --force
-```
-
-**Note**: Using `--force` with non-Cobra frameworks will likely produce errors or unreliable results. This flag is intended for experimentation and edge cases only.
-
-### Basic Validation
-
-```bash
-# From your project directory (no --project-path needed)
-cliguard validate
-
-# Or validate a different project
-cliguard validate --project-path /path/to/project
-```
-
-### Custom Contract Location
-
-```bash
-cliguard validate --project-path /path/to/project --contract /path/to/contract.yaml
-```
-
-### Specifying Entrypoint
-
-For projects where the root command is returned by a function:
-
-```bash
-# From your project directory
-cliguard validate --entrypoint "github.com/org/project/cmd.NewRootCmd"
-```
-
-## How It Works
-
-1. **Contract Loading**: Cliguard reads and validates your YAML contract
-2. **Inspector Generation**: Creates a temporary Go program that imports your CLI
-3. **Structure Extraction**: Runs the inspector to extract the actual CLI structure
-4. **Validation**: Compares the actual structure against the contract
-5. **Reporting**: Provides clear feedback on any discrepancies
-
-## CI/CD Integration
-
-Cliguard provides comprehensive CI/CD integration examples and workflows for various platforms.
-
-### Quick Start
-
-Add Cliguard to your CI pipeline to catch breaking changes:
-
-```yaml
-# GitHub Actions example
-- name: Validate CLI Contract
+- name: Validate CLI Contract  
   run: |
     go install github.com/hiAndrewQuinn/cliguard@latest
     cliguard validate --entrypoint "github.com/org/repo/cmd.NewRootCmd"
 ```
 
-### Full Examples
-
-- **GitHub Actions**: See [`.github/workflows/`](.github/workflows/) for validation and auto-generation workflows
-- **Platform Examples**: Browse [`examples/`](examples/) for GitLab CI, CircleCI, Jenkins, and more
-- **Documentation**: Read the comprehensive [CI/CD Integration Guide](docs/ci-cd-integration.md)
-
-### Supported Platforms
-
-- ✅ GitHub Actions (full workflow examples)
-- ✅ GitLab CI
-- ✅ CircleCI  
-- ✅ Jenkins Pipeline
-- ✅ Docker-based validation
-- ✅ Makefile integration
-
-## Example Output
-
-Success:
+**Make target:**
+```makefile
+.PHONY: validate-cli
+validate-cli:
+	cliguard validate --entrypoint "github.com/org/repo/cmd.NewRootCmd"
 ```
+
+### Dogfooding Example
+
+Cliguard validates its own CLI structure. Try it:
+
+```bash
+git clone https://github.com/hiAndrewQuinn/cliguard.git
+cd cliguard && go build -o cliguard .
+./cliguard validate --entrypoint "github.com/hiAndrewQuinn/cliguard/cmd.NewRootCmd"
+```
+
+## Command Reference
+
+### `cliguard discover`
+Find CLI entrypoints in Go projects automatically.
+
+```bash
+cliguard discover --project-path /path/to/project
+cliguard discover --project-path /path/to/project --interactive  # Pick from multiple options
+```
+
+**Supports:** Cobra, urfave/cli, standard library flag, Kingpin (discovery only for non-Cobra frameworks)
+
+### `cliguard generate`  
+Create contract files from existing CLIs.
+
+```bash
+cliguard generate --entrypoint "github.com/org/repo/cmd.NewRootCmd" > cliguard.yaml
+cliguard generate --project-path /different/path --entrypoint "..." > contract.yaml
+```
+
+**Tip:** If you're in your project directory, `--project-path` defaults to current directory.
+
+### `cliguard validate`
+Validate CLI structure against contracts.
+
+```bash
+cliguard validate --entrypoint "github.com/org/repo/cmd.NewRootCmd"
+cliguard validate --contract custom-contract.yaml --entrypoint "..."
+```
+
+**Returns:** Exit code 0 for success, non-zero for validation failures or errors.
+
+## Contract File Format
+
+Contracts are simple YAML files that mirror Cobra's structure:
+
+```yaml
+use: myapp                    # Root command name
+short: Short description      # Required
+long: Longer description      # Optional
+
+flags:                        # Root-level flags
+  - name: config             # Flag name
+    shorthand: c             # Single character (optional)  
+    usage: Config file path  # Help text
+    type: string             # Flag type
+    persistent: true         # Inherited by subcommands (optional)
+
+commands:                     # Subcommands
+  - use: serve
+    short: Start the server
+    flags:
+      - name: port
+        shorthand: p
+        usage: Port number
+        type: int
+    commands:                 # Nested subcommands work too
+      - use: status
+        short: Check server status
+```
+
+**Supported flag types:** `string`, `bool`, `int`, `int64`, `float64`, `duration`, `stringSlice`
+
+## CLI Framework Support
+
+- ✅ **Cobra** - Full support (discover, generate, validate)
+- ⏳ **urfave/cli** - Discovery only, generation/validation coming soon  
+- ⏳ **Standard library flag** - Discovery only, generation/validation coming soon
+- ⏳ **Kingpin** - Discovery only, generation/validation coming soon
+
+Use `--force` with non-Cobra frameworks to experiment (results may be unreliable).
+
+## Real-World Output
+
+**Success:**
+```
+Loading contract from: cliguard.yaml
+Inspecting CLI structure in: /path/to/project  
+Validating CLI structure against contract...
 ✅ Validation passed! CLI structure matches the contract.
 ```
 
-Failure:
+**Failure:**
 ```
 ❌ Validation failed!
 
@@ -348,53 +230,49 @@ Failure:
     Actual type:   int
 ```
 
-## Dogfooding
+## Advanced Usage
 
-Cliguard validates its own CLI structure. See our [`cliguard.yaml`](./cliguard.yaml) contract file.
+### Working with Complex Projects
 
-## Future CLI Framework Support
-
-We plan to expand cliguard's support to additional CLI frameworks. Our roadmap includes:
-
-- **urfave/cli** - A popular alternative to Cobra with a different API design
-- **Standard library flag** - For simpler CLIs using Go's built-in flag package
-- **Kingpin** - Another feature-rich CLI framework
-
-Each framework will require:
-- Contract schema adaptations for framework-specific features
-- Inspector implementations to extract CLI structure
-- Validation logic tailored to the framework's patterns
-
-If you're interested in contributing support for a specific framework, please check our GitHub issues or open a discussion.
-
-## Development
-
-### Running Tests
-
-Cliguard includes a comprehensive test suite. Use the Makefile for common operations:
+For projects where auto-detection isn't perfect:
 
 ```bash
-# Run all tests
-make test
+# Force operation with unsupported frameworks
+cliguard generate --force --entrypoint "github.com/org/app/cmd.NewApp"
 
-# Run only integration tests
-make test-integration
+# Use custom contract locations
+cliguard validate --contract ./configs/my-contract.yaml --entrypoint "..."
 
-# Set up test fixtures
-make test-fixtures
-
-# Clean and regenerate test fixtures
-make clean-fixtures
+# Interactive selection for complex codebases  
+cliguard discover --project-path ./large-project --interactive
 ```
 
-### Test Fixtures
+### Integration Examples
 
-The project includes test fixtures in `test/fixtures/` for integration testing. These fixtures are automatically maintained by the test helper functions.
+See [`examples/`](examples/) directory for complete CI/CD integration examples:
+- GitHub Actions workflows
+- GitLab CI configurations  
+- CircleCI, Jenkins, and Docker examples
+- Makefile integration patterns
+
+## Troubleshooting
+
+**"No entrypoints found"** - Your CLI might use an unsupported framework, or the entrypoint function might have an unusual name. Try `--interactive` mode or check the [supported frameworks](#cli-framework-support).
+
+**"Framework not supported"** - Use `--force` to experiment, but results may be unreliable. Consider contributing support for your framework!
+
+**Validation fails unexpectedly** - Check if your CLI uses dynamic command registration or framework features not captured in contracts.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Areas where help is especially needed:
+
+- **New framework support** (urfave/cli, kingpin, etc.)
+- **CI/CD integration examples** for other platforms
+- **Documentation improvements**
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) file.

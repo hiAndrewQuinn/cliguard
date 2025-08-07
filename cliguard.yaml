@@ -1,26 +1,62 @@
-# Cliguard contract for the cliguard CLI itself (dogfooding!)
+# Cliguard contract file
+# To use this contract, pipe this output to a file:
+#   cliguard generate --project-path . > cliguard.yaml
+#
 use: cliguard
 short: A contract-based validation tool for Cobra CLIs
-
+long: |-
+    Cliguard validates Cobra command structures against a YAML contract file.
+    It ensures your CLI commands, flags, and structure remain consistent over time.
 commands:
-  - use: generate
-    short: Generate a contract file from a Cobra CLI
-    flags:
-      - name: project-path
-        usage: Path to the root of the target Go project (defaults to current directory)
-        type: string
-      - name: entrypoint
-        usage: The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)
-        type: string
-  - use: validate
-    short: Validate a Cobra CLI against a contract file
-    flags:
-      - name: project-path
-        usage: Path to the root of the target Go project (defaults to current directory)
-        type: string
-      - name: contract
-        usage: Path to the contract file (defaults to cliguard.yaml in project path)
-        type: string
-      - name: entrypoint
-        usage: The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)
-        type: string
+    - use: discover
+      short: Discover CLI entrypoints in a Go project
+      long: |-
+        Discover searches a Go project for potential CLI entrypoints by analyzing
+        common patterns used by various CLI frameworks (Cobra, urfave/cli, flag, etc.).
+        This helps you quickly identify where commands are defined in unfamiliar codebases.
+      flags:
+        - name: force
+          usage: Force operation even with unsupported CLI frameworks
+          type: bool
+        - name: interactive
+          shorthand: i
+          usage: 'Interactive mode: prompt to select from multiple candidates'
+          type: bool
+        - name: project-path
+          usage: Path to the root of the target Go project (required)
+          type: string
+    - use: generate
+      short: Generate a contract file from a Cobra CLI
+      long: |-
+        Generate inspects a Go project's Cobra command structure and generates
+        a YAML contract file that can be used for validation. This is useful for
+        creating an initial contract from an existing CLI.
+      flags:
+        - name: entrypoint
+          usage: The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)
+          type: string
+        - name: force
+          usage: Force operation even with unsupported CLI frameworks
+          type: bool
+        - name: project-path
+          usage: Path to the root of the target Go project (defaults to current directory)
+          type: string
+    - use: validate
+      short: Validate a Cobra CLI against a contract file
+      long: |-
+        Validate inspects a Go project's Cobra command structure and validates
+        it against a YAML contract file. This ensures the CLI's structure, commands,
+        and flags match the expected specification.
+      flags:
+        - name: contract
+          usage: Path to the contract file (defaults to cliguard.yaml in project path)
+          type: string
+        - name: entrypoint
+          usage: The function that returns the root command (e.g., github.com/user/repo/cmd.NewRootCmd)
+          type: string
+        - name: force
+          usage: Force operation even with unsupported CLI frameworks
+          type: bool
+        - name: project-path
+          usage: Path to the root of the target Go project (defaults to current directory)
+          type: string
