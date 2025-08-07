@@ -155,14 +155,15 @@ func (d *Discoverer) analyzeFile(filePath string) ([]EntrypointCandidate, error)
 		return candidates, nil
 	}
 
-	// Get the module path
-	modulePath, err := d.getModulePath()
+	// Get the module path for this specific file
+	modulePath, moduleRoot, err := d.getModulePathForFile(filePath)
 	if err != nil {
 		modulePath = ""
+		moduleRoot = ""
 	}
 
-	// Calculate package path
-	packagePath := d.calculatePackagePath(modulePath, filePath)
+	// Calculate package path relative to the module root
+	packagePath := d.calculatePackagePathForModule(modulePath, filePath, moduleRoot)
 
 	// Scan file line by line for patterns
 	scanner := bufio.NewScanner(strings.NewReader(string(content)))
@@ -268,6 +269,49 @@ func (d *Discoverer) getModulePath() (string, error) {
 	return "", fmt.Errorf("module path not found in go.mod")
 }
 
+// getModulePathForFile finds the module path for a specific file by looking for the nearest go.mod
+func (d *Discoverer) getModulePathForFile(filePath string) (string, string, error) {
+	// Start from the file's directory and walk up to find go.mod
+	fileDir := filepath.Dir(filepath.Join(d.projectPath, filePath))
+	
+	// Walk up the directory tree from file location to project root
+	currentDir := fileDir
+	for {
+		goModPath := filepath.Join(currentDir, "go.mod")
+		if content, err := d.fs.ReadFile(goModPath); err == nil {
+			// Found a go.mod file, parse it
+			scanner := bufio.NewScanner(strings.NewReader(string(content)))
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.HasPrefix(strings.TrimSpace(line), "module ") {
+					parts := strings.Fields(line)
+					if len(parts) >= 2 {
+						// Return module path and the directory containing this go.mod
+						return parts[1], currentDir, nil
+					}
+				}
+			}
+		}
+		
+		// Move up one directory
+		parentDir := filepath.Dir(currentDir)
+		
+		// Stop if we've reached the root directory or gone beyond project path
+		if parentDir == currentDir || !strings.HasPrefix(currentDir, d.projectPath) {
+			break
+		}
+		
+		currentDir = parentDir
+	}
+	
+	// Fallback to project root go.mod
+	modulePath, err := d.getModulePath()
+	if err != nil {
+		return "", "", err
+	}
+	return modulePath, d.projectPath, nil
+}
+
 // calculatePackagePath calculates the full package path for a file
 func (d *Discoverer) calculatePackagePath(modulePath, filePath string) string {
 	if modulePath == "" {
@@ -280,6 +324,27 @@ func (d *Discoverer) calculatePackagePath(modulePath, filePath string) string {
 	}
 
 	return modulePath + "/" + strings.ReplaceAll(dir, string(filepath.Separator), "/")
+}
+
+// calculatePackagePathForModule calculates the package path relative to a specific module root
+func (d *Discoverer) calculatePackagePathForModule(modulePath, filePath, moduleRoot string) string {
+	if modulePath == "" {
+		return ""
+	}
+
+	// Get absolute paths for calculations
+	absFilePath := filepath.Join(d.projectPath, filePath)
+	fileDir := filepath.Dir(absFilePath)
+	
+	// Calculate the relative path from module root to file directory
+	relPath, err := filepath.Rel(moduleRoot, fileDir)
+	if err != nil || relPath == "." {
+		return modulePath
+	}
+
+	// Convert to forward slashes for Go package path
+	packageSuffix := strings.ReplaceAll(relPath, string(filepath.Separator), "/")
+	return modulePath + "/" + packageSuffix
 }
 
 // extractFunctionSignature tries to extract the function signature containing the line
