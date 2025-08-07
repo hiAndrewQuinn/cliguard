@@ -375,8 +375,13 @@ func (d *Discoverer) extractFunctionSignature(content string, lineNumber int) st
 // formatGenerateCommand creates a ready-to-use cliguard generate command for a candidate
 func formatGenerateCommand(candidate EntrypointCandidate, projectPath string) string {
 	entrypoint := candidate.PackagePath
-	if candidate.FunctionSignature != "" && strings.Contains(candidate.FunctionSignature, "NewRootCmd") {
-		entrypoint = candidate.PackagePath + ".NewRootCmd"
+	
+	// For Cobra CLIs, try to determine the correct function name
+	if candidate.Framework == "cobra" {
+		functionName := determineCObraFunctionName(candidate)
+		if functionName != "" {
+			entrypoint = candidate.PackagePath + "." + functionName
+		}
 	}
 
 	if projectPath == "" {
@@ -391,6 +396,58 @@ func formatGenerateCommand(candidate EntrypointCandidate, projectPath string) st
 	}
 
 	return cmd
+}
+
+// determineCObraFunctionName determines the appropriate function name for Cobra entrypoints
+func determineCObraFunctionName(candidate EntrypointCandidate) string {
+	// If we have a function signature, try to extract the function name
+	if candidate.FunctionSignature != "" {
+		// Check for NewRootCmd function (highest priority)
+		if strings.Contains(candidate.FunctionSignature, "NewRootCmd") {
+			return "NewRootCmd"
+		}
+		
+		// Extract function name from signature for functions returning *cobra.Command
+		if strings.Contains(candidate.FunctionSignature, "*cobra.Command") {
+			funcRegex := regexp.MustCompile(`func\s+(\w+)\s*\([^)]*\)\s*\*cobra\.Command`)
+			if matches := funcRegex.FindStringSubmatch(candidate.FunctionSignature); len(matches) > 1 {
+				return matches[1]
+			}
+		}
+	}
+	
+	// Analyze the pattern and line content to determine function name
+	switch candidate.Pattern {
+	case "Function returning root cobra.Command":
+		// This should always have NewRootCmd in the function signature, but fallback
+		if strings.Contains(candidate.Line, "NewRootCmd") {
+			return "NewRootCmd"
+		}
+		// Extract function name from the line itself
+		funcRegex := regexp.MustCompile(`func\s+(\w+)\s*\([^)]*\)\s*\*cobra\.Command`)
+		if matches := funcRegex.FindStringSubmatch(candidate.Line); len(matches) > 1 {
+			return matches[1]
+		}
+		
+	case "Cobra Execute function":
+		// For Execute() calls or references to NewRootCmd().Execute(), use NewRootCmd
+		if strings.Contains(candidate.Line, "NewRootCmd().Execute()") || 
+		   strings.Contains(candidate.Line, "NewRootCmd().Execute();") {
+			return "NewRootCmd"
+		}
+		// For standalone Execute() function definitions, we need NewRootCmd as the entry point
+		if strings.Contains(candidate.Line, "func Execute()") {
+			return "NewRootCmd"
+		}
+		
+	case "Root command initialization":
+		// For rootCmd := &cobra.Command patterns, look for associated NewRootCmd function
+		// This is a heuristic - most Cobra CLIs have NewRootCmd as the entry point
+		return "NewRootCmd"
+	}
+	
+	// Default fallback - return empty string to indicate no function name could be determined
+	return ""
 }
 
 // PrintCandidates prints the discovered candidates in a user-friendly format
@@ -436,11 +493,17 @@ func PrintCandidates(w io.Writer, candidates []EntrypointCandidate, projectPath 
 	// Suggest the most likely entrypoint
 	if candidates[0].Confidence >= 85 {
 		fmt.Fprintln(w, "Suggested entrypoint:")
-		if candidates[0].FunctionSignature != "" && strings.Contains(candidates[0].FunctionSignature, "NewRootCmd") {
-			fmt.Fprintf(w, "  --entrypoint %s.NewRootCmd\n", candidates[0].PackagePath)
-		} else {
-			fmt.Fprintf(w, "  --entrypoint %s\n", candidates[0].PackagePath)
+		
+		// Use the same logic as formatGenerateCommand to determine the complete entrypoint
+		entrypoint := candidates[0].PackagePath
+		if candidates[0].Framework == "cobra" {
+			functionName := determineCObraFunctionName(candidates[0])
+			if functionName != "" {
+				entrypoint = candidates[0].PackagePath + "." + functionName
+			}
 		}
+		
+		fmt.Fprintf(w, "  --entrypoint %s\n", entrypoint)
 
 		// Add warning if suggested entrypoint is not Cobra
 		if candidates[0].Framework != "cobra" {

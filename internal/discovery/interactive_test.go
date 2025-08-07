@@ -145,25 +145,53 @@ func TestFormatSelectedEntrypoint(t *testing.T) {
 		{
 			name: "NewRootCmd function",
 			candidate: EntrypointCandidate{
+				Framework:         "cobra",
 				FunctionSignature: "func NewRootCmd() *cobra.Command",
 				PackagePath:       "github.com/test/project/cmd",
+				Pattern:           "Function returning root cobra.Command",
+				Line:              "func NewRootCmd() *cobra.Command {",
 			},
 			expected: "--entrypoint github.com/test/project/cmd.NewRootCmd",
 		},
 		{
-			name: "no function signature",
+			name: "no function signature - non-cobra",
 			candidate: EntrypointCandidate{
+				Framework:   "flag",
 				PackagePath: "github.com/test/project",
 			},
 			expected: "--entrypoint github.com/test/project",
 		},
 		{
-			name: "different function name",
+			name: "Execute function - cobra",
 			candidate: EntrypointCandidate{
+				Framework:         "cobra",
 				FunctionSignature: "func Execute()",
 				PackagePath:       "github.com/test/project/cmd",
+				Pattern:           "Cobra Execute function",
+				Line:              "func Execute() {",
 			},
-			expected: "--entrypoint github.com/test/project/cmd",
+			expected: "--entrypoint github.com/test/project/cmd.NewRootCmd",
+		},
+		{
+			name: "Root command initialization - cobra",
+			candidate: EntrypointCandidate{
+				Framework:   "cobra",
+				PackagePath: "github.com/test/project/cmd",
+				Pattern:     "Root command initialization",
+				Line:        "rootCmd := &cobra.Command{",
+			},
+			expected: "--entrypoint github.com/test/project/cmd.NewRootCmd",
+		},
+		{
+			name: "NewRootCmd().Execute() call - cobra",
+			candidate: EntrypointCandidate{
+				Framework:         "cobra",
+				FunctionSignature: "func ExecuteWithWriter(errWriter io.Writer)",
+				PackagePath:       "github.com/test/project/cmd",
+				Pattern:           "Cobra Execute function",
+				Line:              "if err := NewRootCmd().Execute(); err != nil {",
+			},
+			expected: "--entrypoint github.com/test/project/cmd.NewRootCmd",
 		},
 	}
 

@@ -86,8 +86,15 @@ func (s *InteractiveSelector) SelectCandidate(candidates []EntrypointCandidate) 
 
 // FormatSelectedEntrypoint formats the selected entrypoint for display
 func FormatSelectedEntrypoint(candidate *EntrypointCandidate) string {
-	if candidate.FunctionSignature != "" && strings.Contains(candidate.FunctionSignature, "NewRootCmd") {
-		return fmt.Sprintf("--entrypoint %s.NewRootCmd", candidate.PackagePath)
+	entrypoint := candidate.PackagePath
+	
+	// For Cobra CLIs, try to determine the correct function name
+	if candidate.Framework == "cobra" {
+		functionName := determineCObraFunctionName(*candidate)
+		if functionName != "" {
+			entrypoint = candidate.PackagePath + "." + functionName
+		}
 	}
-	return fmt.Sprintf("--entrypoint %s", candidate.PackagePath)
+	
+	return fmt.Sprintf("--entrypoint %s", entrypoint)
 }
