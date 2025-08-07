@@ -1,0 +1,107 @@
+Cliguard Performance Benchmark Results
+======================================
+Timestamp: Thu Aug  7 04:33:37 PM EEST 2025
+Go Version: go version go1.24.4 linux/amd64
+OS: Linux 6.1.0-37-amd64
+CPU: x86_64
+
+
+Validator Performance Benchmarks
+----------------------------------------
+- test --flag: Missing flag
+    Expected: flag
+- test --extra: Unexpected flag
+    Found: extra
+- test: Mismatch
+    Expected: exp
+    Actual:   act
+- test --type: Type mismatch
+    Expected type: string
+    Actual type:   int
+- test --flag: Missing flag
+    Expected: flag
+- test --extra: Unexpected flag
+    Found: extra
+- test: Mismatch
+    Expected: exp
+    Actual:   act
+- test --type: Type mismatch
+    Expected type: string
+    Actual type:   int
+- test --flag: Missing flag
+    Expected: flag
+- test --extra: Unexpected flag
+    Found: extra
+- test: Mismatch
+    Expected: exp
+    Actual:   act
+- test --type: Type mismatch
+    Expected type: string
+    Actual type:   int
+goos: linux
+goarch: amd64
+pkg: github.com/hiAndrewQuinn/cliguard/internal/validator
+cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+BenchmarkValidateSmallCLI-8          	  126494	     19570 ns/op	    6902 B/op	     358 allocs/op
+BenchmarkValidateSmallCLI-8          	  116395	     19386 ns/op	    6902 B/op	     358 allocs/op
+BenchmarkValidateSmallCLI-8          	  121932	     19232 ns/op	    6902 B/op	     358 allocs/op
+BenchmarkValidateMediumCLI-8         	   10000	    206725 ns/op	   71424 B/op	    3918 allocs/op
+BenchmarkValidateMediumCLI-8         	   10000	    222989 ns/op	   71425 B/op	    3918 allocs/op
+BenchmarkValidateMediumCLI-8         	   10000	    254249 ns/op	   71425 B/op	    3918 allocs/op
+BenchmarkValidateLargeCLI-8          	    2655	    910867 ns/op	  331956 B/op	   14512 allocs/op
+BenchmarkValidateLargeCLI-8          	    2574	    935956 ns/op	  331958 B/op	   14512 allocs/op
+BenchmarkValidateLargeCLI-8          	    2620	    937158 ns/op	  331962 B/op	   14512 allocs/op
+BenchmarkValidateExtraLargeCLI-8     	     309	   9506860 ns/op	 3148717 B/op	  104858 allocs/op
+BenchmarkValidateExtraLargeCLI-8     	     303	   8598648 ns/op	 3148685 B/op	  104858 allocs/op
+BenchmarkValidateExtraLargeCLI-8     	     289	   7975535 ns/op	 3148702 B/op	  104858 allocs/op
+BenchmarkValidateDeeplyNestedCLI-8   	    2917	    785387 ns/op	  342401 B/op	   11953 allocs/op
+BenchmarkValidateDeeplyNestedCLI-8   	    2971	    828818 ns/op	  342403 B/op	   11953 allocs/op
+BenchmarkValidateDeeplyNestedCLI-8   	    2622	    825863 ns/op	  342398 B/op	   11953 allocs/op
+PASS
+ok  	github.com/hiAndrewQuinn/cliguard/internal/validator	41.800s
+
+
+Inspector Performance Benchmarks
+----------------------------------------
+goos: linux
+goarch: amd64
+pkg: github.com/hiAndrewQuinn/cliguard/internal/inspector
+cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+BenchmarkConvertSmallCLI-8        	  696848	      3723 ns/op	   10432 B/op	      51 allocs/op
+BenchmarkConvertSmallCLI-8        	  542865	      4169 ns/op	   10432 B/op	      51 allocs/op
+BenchmarkConvertSmallCLI-8        	  591222	      4204 ns/op	   10432 B/op	      51 allocs/op
+BenchmarkConvertMediumCLI-8       	  116782	     21861 ns/op	   49024 B/op	     225 allocs/op
+BenchmarkConvertMediumCLI-8       	  104943	     24516 ns/op	   49025 B/op	     225 allocs/op
+BenchmarkConvertMediumCLI-8       	  103962	     21606 ns/op	   49024 B/op	     225 allocs/op
+BenchmarkConvertLargeCLI-8        	   55294	     43246 ns/op	   98626 B/op	     444 allocs/op
+BenchmarkConvertLargeCLI-8        	   55196	     43294 ns/op	   98626 B/op	     444 allocs/op
+BenchmarkConvertLargeCLI-8        	   55167	     43885 ns/op	   98626 B/op	     444 allocs/op
+BenchmarkConvertExtraLargeCLI-8   	    7455	    337769 ns/op	  461339 B/op	    2178 allocs/op
+BenchmarkConvertExtraLargeCLI-8   	    6670	    342480 ns/op	  461340 B/op	    2178 allocs/op
+BenchmarkConvertExtraLargeCLI-8   	    7458	    391234 ns/op	  461338 B/op	    2178 allocs/op
+BenchmarkExtractFlags-8           	  250339	      8685 ns/op	   43136 B/op	       9 allocs/op
+BenchmarkExtractFlags-8           	  278283	      9619 ns/op	   43136 B/op	       9 allocs/op
+BenchmarkExtractFlags-8           	  249420	      8811 ns/op	   43136 B/op	       9 allocs/op
+PASS
+ok  	github.com/hiAndrewQuinn/cliguard/internal/inspector	42.258s
+
+
+Contract Parser Performance Benchmarks
+----------------------------------------
+goos: linux
+goarch: amd64
+pkg: github.com/hiAndrewQuinn/cliguard/internal/contract
+cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
+BenchmarkLoadSmallContract-8        	    2437	    871357 ns/op	  510531 B/op	    6386 allocs/op
+BenchmarkLoadSmallContract-8        	    2864	    889091 ns/op	  510531 B/op	    6386 allocs/op
+BenchmarkLoadSmallContract-8        	    2805	    853782 ns/op	  510529 B/op	    6386 allocs/op
+BenchmarkLoadMediumContract-8       	     474	   4923600 ns/op	 2745119 B/op	   34732 allocs/op
+BenchmarkLoadMediumContract-8       	     475	   5081278 ns/op	 2745120 B/op	   34732 allocs/op
+BenchmarkLoadMediumContract-8       	     462	   4899875 ns/op	 2745116 B/op	   34732 allocs/op
+BenchmarkLoadLargeContract-8        	     248	  10148952 ns/op	 5537552 B/op	   70163 allocs/op
+BenchmarkLoadLargeContract-8        	     235	  10041382 ns/op	 5537556 B/op	   70163 allocs/op
+BenchmarkLoadLargeContract-8        	     240	   9856124 ns/op	 5537554 B/op	   70163 allocs/op
+BenchmarkLoadExtraLargeContract-8   	      46	  53051630 ns/op	27907652 B/op	  354006 allocs/op
+BenchmarkLoadExtraLargeContract-8   	      44	  52945890 ns/op	27907631 B/op	  354005 allocs/op
+BenchmarkLoadExtraLargeContract-8   	      43	  54746465 ns/op	27907676 B/op	  354006 allocs/op
+BenchmarkLoadComplexContract-8      	
