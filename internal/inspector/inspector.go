@@ -232,7 +232,47 @@ func getFlagType(flag *pflag.Flag) string {
 }
 `
 
-// InspectProject generates an inspector program and runs it to get the CLI structure
+// InspectProject analyzes a Go project to extract its CLI structure.
+// It generates and executes a temporary inspection program that uses reflection
+// to discover all commands, subcommands, and flags.
+//
+// Parameters:
+//   - projectPath: Path to the Go project directory (must contain go.mod)
+//   - entrypoint: The function that creates the root command (e.g., "cmd.NewRootCmd")
+//
+// The entrypoint should be in one of these formats:
+//   - "NewRootCmd" - function in main package
+//   - "cmd.NewRootCmd" - function in a package
+//   - "(*App).NewRootCmd" - method on a type
+//
+// Example:
+//
+//	// Inspect a CLI project
+//	cli, err := inspector.InspectProject("./my-cli", "cmd.NewRootCmd")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	
+//	// Use the inspected structure
+//	fmt.Printf("CLI: %s\n", cli.Use)
+//	fmt.Printf("Description: %s\n", cli.Short)
+//	
+//	// List all commands
+//	for _, cmd := range cli.Commands {
+//	    fmt.Printf("  Command: %s - %s\n", cmd.Use, cmd.Short)
+//	}
+//	
+//	// List all flags
+//	for _, flag := range cli.Flags {
+//	    fmt.Printf("  Flag: --%s (-%s) [%s]: %s\n", 
+//	        flag.Name, flag.Shorthand, flag.Type, flag.Usage)
+//	}
+//
+// Returns an error if:
+//   - The project path doesn't exist or isn't a Go module
+//   - The entrypoint function cannot be found
+//   - The project fails to build
+//   - The CLI doesn't use cobra
 func InspectProject(projectPath, entrypoint string) (*InspectedCLI, error) {
 	// Create inspector with default dependencies
 	inspector := NewInspector(Config{
