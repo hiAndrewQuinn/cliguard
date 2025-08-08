@@ -214,6 +214,16 @@ func TestDefaultValidateRunner(t *testing.T) {
 			return nil, errors.New("project not found")
 		}
 
+		runner.service.InspectorWithTimeout = func(projectPath, entrypoint string, timeout time.Duration) (*inspector.InspectedCLI, error) {
+			if projectPath == tmpDir {
+				return &inspector.InspectedCLI{
+					Use:   "myapp",
+					Short: "My app",
+				}, nil
+			}
+			return nil, errors.New("project not found")
+		}
+
 		cmd := &cobra.Command{}
 		buf := new(bytes.Buffer)
 		cmd.SetOut(buf)
