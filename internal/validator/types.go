@@ -81,7 +81,11 @@ func (vr *ValidationResult) PrintReport() {
 	if len(missingErrors) > 0 {
 		fmt.Println("\n❌ Missing items:")
 		for _, err := range missingErrors {
-			fmt.Printf("   • %s: %s\n", err.Description, err.Path)
+			if err.Description != "" {
+				fmt.Printf("   • %s: %s\n", err.Description, err.Path)
+			} else {
+				fmt.Printf("   • %s\n", err.Path)
+			}
 			if err.Expected != "" {
 				fmt.Printf("     Add to contract: %s\n", err.Expected)
 			}
